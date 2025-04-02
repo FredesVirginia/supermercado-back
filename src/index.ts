@@ -13,7 +13,7 @@ conn.sync({ force: false }).then(() => {
   });
 });
 
-cron.schedule("25 18 * * *", () => {
+cron.schedule("21 03 * * *", () => {
   console.log("Revisando productos proximos a expirar ...");
   checkExpiringProducts();
 });

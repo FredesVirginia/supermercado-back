@@ -5,13 +5,13 @@ import jwt from "jsonwebtoken";
 import { validateRequiredStrings } from "../utils/utils";
 import { authMiddleware, roleMiddleware } from "../middelware/authMiddleware";
 import { UserRole } from "../types/types";
-import { Supermercado, User } from "../db";
+import { SolicitudSupermercado, Supermercado, User } from "../db";
+import { Op } from "sequelize";
 
 const routerUser = Router();
 
-
 routerUser.post("/register", async (req: any, res: any) => {
-  const { name, email, password, role, surname , phone } = req.body;
+  const { name, email, password, role, surname, phone } = req.body;
   console.log("LE NNAMESA ES", req.body);
 
   // VERIFICACIÓN DE EXISTENCIA DE USUARIO
@@ -22,64 +22,12 @@ routerUser.post("/register", async (req: any, res: any) => {
 
   try {
     const hasshedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ name, surname, email, password: hasshedPassword, role , phone });
+    const newUser = await User.create({ name, surname, email, password: hasshedPassword, role, phone });
     res.status(201).json({ message: "Usuario registrado correctamente", user: newUser });
   } catch (error) {
     res.status(500).json({ message: "Error al registrar usuario", error });
   }
 });
-
-// routerUser.post("/login", async (req: any, res: any) => {
-//   const { email, password } = req.body;
-//   try {
-//     const existingUser = await User.findOne({
-//       where: { email },
-//       include: [
-//         {
-//           model: Supermercado,
-//           as: "supermercados",
-//           required: false, // Para que no falle si no tiene supermercado
-//         },
-//       ],
-//     });
-//     if (!existingUser) return res.status(400).json({ message: "Usuario no registado" });
-
-//     const isMatch = await bcrypt.compare(password, existingUser.password);
-//     if (!isMatch) return res.status(400).json({ message: "Contraseña incorrecta" });
-//     const supermercado = await Supermercado.findOne({
-//       where: { admin_id: existingUser.id },
-//     });
-
-//     if(existingUser.role === UserRole.SUPER_ADMIN){
-//       const token = jwt.sign(
-//         { id: existingUser.id, role: existingUser.role,  },
-//         process.env.JWT_SECRET!,
-//         { expiresIn: "1h" }
-//       );
-  
-//       const userData = existingUser.get({ plain: true });
-//       delete userData.password;
-//       res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData });
-//     }
-
-//     if (!supermercado) {
-//       return res.status(400).json({ message: "El usuario no tiene un supermercado asignado" });
-//     }
-//     //GENERACION DE TOKEN
-//     const token = jwt.sign(
-//       { id: existingUser.id, role: existingUser.role, supermercado_id: supermercado.id },
-//       process.env.JWT_SECRET!,
-//       { expiresIn: "1h" }
-//     );
-
-//     const userData = existingUser.get({ plain: true });
-//     delete userData.password;
-//     res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData });
-//   } catch (error) {
-//     console.log("Error login", error);
-//     res.status(500).json({ message: "Error INICIO SESION", error });
-//   }
-// });
 
 routerUser.post("/login", async (req: any, res: any) => {
   const { email, password } = req.body;
@@ -98,32 +46,34 @@ routerUser.post("/login", async (req: any, res: any) => {
     if (!existingUser) return res.status(400).json({ message: "Usuario no registrado" });
 
     //const isMatch = await bcrypt.compare(password, existingUser.get('password'));
-    const isMatch = await bcrypt.compare(password, existingUser.getDataValue('password'));
+    const isMatch = await bcrypt.compare(password, existingUser.password!);
     if (!isMatch) return res.status(400).json({ message: "Contraseña incorrecta" });
 
     // Si es SUPER_ADMIN, generamos el token y respondemos inmediatamente
-    if (existingUser.getDataValue('role') === UserRole.SUPER_ADMIN) {
+    if (existingUser.getDataValue("role") === UserRole.SUPER_ADMIN) {
       const token = jwt.sign(
-        { id: existingUser.getDataValue('id'), role: existingUser.getDataValue('role') },
+        { id: existingUser.getDataValue("id"), role: existingUser.getDataValue("role") },
         process.env.JWT_SECRET!,
         { expiresIn: "1h" }
       );
 
       const userData = existingUser.get({ plain: true });
-      //delete userData.password;
+      delete userData.password;
 
       return res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
     }
 
     // Si no es SUPER_ADMIN, verificamos que tenga un supermercado asignado
     const supermercado = await Supermercado.findOne({
-      where: { 
-        admin_id: existingUser.id 
+      where: {
+        admin_id: existingUser.id,
       },
-      include: [{
-        model: User,
-        as: 'admin'
-      }]
+      include: [
+        {
+          model: User,
+          as: "admin",
+        },
+      ],
     });
 
     if (!supermercado) {
@@ -132,13 +82,17 @@ routerUser.post("/login", async (req: any, res: any) => {
 
     // Si el usuario tiene supermercado, generamos el token y respondemos
     const token = jwt.sign(
-      { id: existingUser.getDataValue('id'), role: existingUser.getDataValue('role'), supermercado_id: supermercado.getDataValue('id') },
+      {
+        id: existingUser.getDataValue("id"),
+        role: existingUser.getDataValue("role"),
+        supermercado_id: supermercado.getDataValue("id"),
+      },
       process.env.JWT_SECRET!,
       { expiresIn: "1h" }
     );
 
     const userData = existingUser.get({ plain: true });
-    //delete userData.password;
+    delete userData.password;
 
     return res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
   } catch (error) {
@@ -146,7 +100,6 @@ routerUser.post("/login", async (req: any, res: any) => {
     return res.status(500).json({ message: "Error INICIO SESION", error }); // ✅ SE USA RETURN
   }
 });
-
 
 routerUser.post("/addSupermarket", authMiddleware, roleMiddleware([UserRole.SUPER_ADMIN]), async (req: any, res: any) => {
   const requiredFields = ["name", "address", "provincia", "localidad"];
@@ -159,7 +112,7 @@ routerUser.post("/addSupermarket", authMiddleware, roleMiddleware([UserRole.SUPE
         if (validateRequiredStrings(supermercado, requiredFields)) {
           const newSupermarket = await Supermercado.create({
             ...supermercado,
-            admin_id: user.getDataValue('id'),
+            admin_id: user.getDataValue("id"),
           });
 
           return res.status(200).json({ data: newSupermarket });
@@ -176,5 +129,114 @@ routerUser.post("/addSupermarket", authMiddleware, roleMiddleware([UserRole.SUPE
     return res.status(500).json({ error });
   }
 });
+
+routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([UserRole.SUPER_ADMIN]), async (req: any, res: any) => {
+    const requiredField = [
+      "name",
+      "surname",
+      "email",
+      "password",
+      "role",
+      "phone",
+      "nameSupermercado",
+      "localidad",
+      "provincia",
+      "address",
+      "run"
+     
+    ];
+    const {
+      name,
+      surname,
+      email,
+      password,
+      role,
+      phone,
+      nameSupermercado,
+      localidad,
+      provincia,
+      address,
+      run
+      
+    } = req.body;
+
+    try {
+      if (validateRequiredStrings(requiredField, req.body)) {
+        const existinUser = await User.findOne({ where: { email } });
+        const existingSupermarket = await Supermercado.findOne({
+          where: {
+            [Op.and]: [{ name: nameSupermercado }, { address: address }],
+          },
+        });
+
+        
+
+        if (existingSupermarket) {
+          return res.status(409).json({
+            message: "Ya existe un supermercado con este nombre en esta direccion",
+          });
+        }
+        if (!existinUser) {
+          console.log("ÑO HAY");
+          const hasshedPassword = await bcrypt.hash(password, 10);
+          const newUser = await User.create({ name, surname, email, password: hasshedPassword, role, phone });
+           if(!existingSupermarket){
+            const newSupermarket = await Supermercado.create({
+              name : nameSupermercado , 
+              address, 
+              localidad,
+              provincia,
+              admin_id : newUser.id,
+              run
+            })
+           }
+
+        
+           const deleteSolicitud = await SolicitudSupermercado.findOne({
+            where: {
+              [Op.and]: [
+                { email },
+                { nameSupermercado },
+                { address }
+              ]
+            }
+          });
+         
+          if(deleteSolicitud){
+            await deleteSolicitud.destroy();
+            console.log("BORRADO")
+          }
+          return res.status(200).json({ message: "Solicitud Aprobada 1" });
+        } else {
+          const newSupermarket = await Supermercado.create({
+            name : nameSupermercado , 
+            address, 
+            localidad,
+            provincia,
+            admin_id : existinUser.id,
+            run
+          })
+
+          const deleteSolicitud = await SolicitudSupermercado.findOne({
+            where: {
+              [Op.and]: [
+                { email },
+                { nameSupermercado },
+                { address }
+              ]
+            }
+          });
+          console.log("SOLICITUD   222" , deleteSolicitud)
+         return res.status(200).json({ message: "Solicitud Aprobada 2" });
+        }
+
+       
+      }
+    } catch (error) {
+      console.log("EL ERROR " , error)
+      res.status(500).json({ message: error });
+    }
+  }
+);
 
 export default routerUser;

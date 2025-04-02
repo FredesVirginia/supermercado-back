@@ -14,7 +14,7 @@ import initPromocion from "./models/Promocion";
 import initReporte from "./models/Reporte";
 import initSupermercado from "./models/Supermercado";
 import initProveedor from "./models/Proveedor"
-
+import initSolicitudSupermercado from "./models/SolicitudesSupermercados"
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_DATABASE}`, {
   logging: false, // set to console.log to see the raw SQL queries
   native: false, // lets Sequelize know we can use pg-native for ~30% more speed
@@ -53,6 +53,7 @@ const Producto = initProducto(sequelize)
 const Promocion = initPromocion(sequelize);
 const Reporte = initReporte(sequelize);
 const Proveedor = initProveedor(sequelize)
+const SolicitudSupermercado = initSolicitudSupermercado(sequelize)
 const models = sequelize.models; 
 // 📌 Un Supermercado pertenece a un Usuario (Administrador)
 Supermercado.belongsTo(User, { foreignKey: "admin_id", as: "admin" });
@@ -112,4 +113,4 @@ export const conn = sequelize;
 //   conn,
 // };
 
-export { sequelize, models , User , Producto , Proveedor , Supermercado , Categoria };
+export { sequelize, models , User , Producto , Proveedor , Supermercado , Categoria , SolicitudSupermercado};

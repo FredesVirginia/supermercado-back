@@ -9,6 +9,7 @@ interface SupermercadoAttributes {
   provincia: string;
   localidad: string;
   admin_id?: string;
+  run : string
 }
 
 // Interface para los atributos de creación (opcional, permite omitir el id)
@@ -22,7 +23,7 @@ class Supermercado extends Model<SupermercadoAttributes, SupermercadoCreationAtt
   public address!: string;
   public provincia!: string;
   public localidad!: string;
-
+  public run! :string;
   // Timestamps automáticos de Sequelize
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
@@ -51,6 +52,10 @@ const initSupermercado = (sequelize: Sequelize): typeof Supermercado => {
         allowNull: false,
       },
       localidad: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      run: {
         type: DataTypes.STRING,
         allowNull: false,
       },

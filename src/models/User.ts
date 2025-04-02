@@ -11,14 +11,13 @@ interface UserAttributes {
   phone: string;
   email: string;
   role: UserRole;
-  password: string;
-  emailVerified?: boolean;
-  lastLogin?: Date | null;
+  password?: string;
+  
   supermercado_id? : string
 }
 
 // Interface para los atributos de creación
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'emailVerified' | 'lastLogin'> {}
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' > {}
 
 class User extends Model<UserAttributes, UserCreationAttributes> 
   implements UserAttributes {
@@ -29,9 +28,8 @@ class User extends Model<UserAttributes, UserCreationAttributes>
   public phone!: string;
   public email!: string;
   public role!: UserRole;
-  public password!: string;
-  public emailVerified!: boolean;
-  public lastLogin!: Date | null;
+  public password?: string;
+  
 
   // Timestamps automáticos
   public readonly createdAt!: Date;
@@ -105,41 +103,19 @@ const initUser = (sequelize: Sequelize): typeof User => {
           len: [8, 128] // Mínimo 8 caracteres
         }
       },
-      emailVerified: {
-        type: DataTypes.BOOLEAN,
-        defaultValue: false
-      },
-      lastLogin: {
-        type: DataTypes.DATE,
-        allowNull: true
-      }
+     
     },
     {
       sequelize,
       modelName: 'User',
       // Opciones adicionales:
-      defaultScope: {
-        attributes: {
-          exclude: ['password'] // Por defecto excluir password
-        }
-      },
-      scopes: {
-        withPassword: {
-          attributes: { include: ['password'] } // Scope para incluir password cuando sea necesario
-        },
-        admins: {
-          where: { role: 'admin' }
-        }
-      },
-      indexes: [
-        { fields: ['email'] },
-        { fields: ['role'] },
-        { fields: ['createdAt'] }
-      ]
+      
+     
+    
     }
   );
 
-  // Hooks (opcionales)
+
  
 
   return User;
