@@ -130,7 +130,11 @@ routerUser.post("/addSupermarket", authMiddleware, roleMiddleware([UserRole.SUPE
   }
 });
 
-routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([UserRole.SUPER_ADMIN]), async (req: any, res: any) => {
+routerUser.post(
+  "/solicitudes/supermercados",
+  authMiddleware,
+  roleMiddleware([UserRole.SUPER_ADMIN]),
+  async (req: any, res: any) => {
     const requiredField = [
       "name",
       "surname",
@@ -143,24 +147,10 @@ routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([Use
       "departamento",
       "provincia",
       "address",
-      "run"
-     
+      "run",
     ];
-    const {
-      name,
-      surname,
-      email,
-      password,
-      role,
-      phone,
-      nameSupermercado,
-      localidad,
-      departamento,
-      provincia,
-      address,
-      run
-      
-    } = req.body;
+    const { name, surname, email, password, role, phone, nameSupermercado, localidad, departamento, provincia, address, run } =
+      req.body;
 
     try {
       if (validateRequiredStrings(requiredField, req.body)) {
@@ -171,8 +161,6 @@ routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([Use
           },
         });
 
-        
-
         if (existingSupermarket) {
           return res.status(409).json({
             message: "Ya existe un supermercado con este nombre en esta direccion",
@@ -182,63 +170,51 @@ routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([Use
           console.log("ÑO HAY");
           const hasshedPassword = await bcrypt.hash(password, 10);
           const newUser = await User.create({ name, surname, email, password: hasshedPassword, role, phone });
-           if(!existingSupermarket){
+          if (!existingSupermarket) {
             const newSupermarket = await Supermercado.create({
-              name : nameSupermercado , 
-              address, 
+              name: nameSupermercado,
+              address,
               localidad,
               provincia,
               departamento,
-              admin_id : newUser.id,
-              run
-            })
-           }
+              admin_id: newUser.id,
+              run,
+            });
+          }
 
-        
-           const deleteSolicitud = await SolicitudSupermercado.findOne({
+          const deleteSolicitud = await SolicitudSupermercado.findOne({
             where: {
-              [Op.and]: [
-                { email },
-                { nameSupermercado },
-                { address }
-              ]
-            }
+              [Op.and]: [{ email }, { nameSupermercado }, { address }],
+            },
           });
-         
-          if(deleteSolicitud){
+
+          if (deleteSolicitud) {
             await deleteSolicitud.destroy();
-            console.log("BORRADO")
           }
           return res.status(200).json({ message: "Solicitud Aprobada 1" });
         } else {
           const newSupermarket = await Supermercado.create({
-            name : nameSupermercado , 
-            address, 
+            name: nameSupermercado,
+            address,
             localidad,
             provincia,
             departamento,
-            admin_id : existinUser.id,
-            run
-          })
+            admin_id: existinUser.id,
+            run,
+          });
 
           const deleteSolicitud = await SolicitudSupermercado.findOne({
             where: {
-              [Op.and]: [
-                { email },
-                { nameSupermercado },
-                { address }
-              ]
-            }
+              [Op.and]: [{ email }, { nameSupermercado }, { address }],
+            },
           });
-          console.log("SOLICITUD   222" , deleteSolicitud)
-         return res.status(200).json({ message: "Solicitud Aprobada 2" });
-        }
 
-       
+          return res.status(200).json({ message: "Solicitud Aprobada 2" });
+        }
       }
     } catch (error) {
-      console.log("EL ERROR " , error)
-      res.status(500).json({ message: error });
+      console.log("EL ERROR ", error);
+      res.status(500).json({ message: "Error Desconocido" });
     }
   }
 );

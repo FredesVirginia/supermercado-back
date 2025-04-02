@@ -236,7 +236,7 @@ routerSupermercado.get("/productos", async (req, res) => {
 });
 
 
-routerSupermercado.post("/solicitud" , authMiddleware , roleMiddleware([UserRole.SUPER_ADMIN]) , async (req : Request , res : Response)=>{
+routerSupermercado.post("/solicitud" , async (req : Request , res : Response)=>{
  
   const requiredField = ["name", "surname", "email", "password", "role", "phone" , "name_supermercado" , "departamento", "localidad" , "provincia" , "address" , "estado" , "fecha_solicitud" , "run"];
   const{name, surname, email, password, role, phone , name_supermercado , localidad , provincia , address , departamento, estado , fecha_solicitud , run} = req.body;
