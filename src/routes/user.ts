@@ -140,6 +140,7 @@ routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([Use
       "phone",
       "nameSupermercado",
       "localidad",
+      "departamento",
       "provincia",
       "address",
       "run"
@@ -154,6 +155,7 @@ routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([Use
       phone,
       nameSupermercado,
       localidad,
+      departamento,
       provincia,
       address,
       run
@@ -186,6 +188,7 @@ routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([Use
               address, 
               localidad,
               provincia,
+              departamento,
               admin_id : newUser.id,
               run
             })
@@ -213,6 +216,7 @@ routerUser.post("/solicitudes/supermercados",authMiddleware, roleMiddleware([Use
             address, 
             localidad,
             provincia,
+            departamento,
             admin_id : existinUser.id,
             run
           })

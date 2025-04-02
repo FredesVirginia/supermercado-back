@@ -243,11 +243,11 @@ routerSupermercado.post("/solicitud" , authMiddleware , roleMiddleware([UserRole
   try{
     if(validateRequiredStrings(requiredField , req.body)){
       const newSolicitudSupermercado = await SolicitudSupermercado.create({
-        name, surname, email, password, role, phone , nameSupermercado: name_supermercado , localidad , departamento, provincia , address , estado , fecha_solicitud , run
+        name, surname, email, password, role, phone , nameSupermercado: name_supermercado , localidad , provincia , departamento : departamento, address , estado , fecha_solicitud , run
       })
       res.status(200).json({data : newSolicitudSupermercado})
     }
-  }catch(error){
+  }catch(error){ 
     console.log("El error fue" , error);
     res.status(500).json({message : error})
   }

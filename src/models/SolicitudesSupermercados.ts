@@ -14,7 +14,7 @@ interface SolicitudSupermercadoAttributes {
     nameSupermercado: string;
     address: string;
     provincia: string;
-    departamento:string;
+    departamento?:string;
     localidad: string;
     fecha_solicitud: Date | null;
     estado: Estado;
@@ -39,7 +39,7 @@ interface SolicitudSupermercadoAttributes {
     public address!: string;
     public provincia!: string;
     public localidad!: string;
-    public departamento! :string;
+    public departamento? :string;
     public fecha_solicitud!: Date | null;
     public estado!: Estado;
     public run! : string;
@@ -122,7 +122,7 @@ interface SolicitudSupermercadoAttributes {
         },
         departamento: {
           type: DataTypes.STRING,
-          allowNull: false,
+          allowNull: true,
         },
         localidad: {
           type: DataTypes.STRING,
