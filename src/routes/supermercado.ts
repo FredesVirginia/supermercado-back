@@ -9,7 +9,7 @@ import { CategoriaAttributes } from "../models/Categoria";
 const routerSupermercado = Router();
 
 routerSupermercado.post("/add", authMiddleware, roleMiddleware([UserRole.SUPER_ADMIN]), async (req: any, res: any) => {
-  const requiredFields = ["name", "address", "provincia", "localidad"];
+  const requiredFields = ["name", "address", "provincia", "departamento","localidad"];
   const { admidEmail, supermercado } = req.body;
 
   try {
@@ -238,12 +238,12 @@ routerSupermercado.get("/productos", async (req, res) => {
 
 routerSupermercado.post("/solicitud" , authMiddleware , roleMiddleware([UserRole.SUPER_ADMIN]) , async (req : Request , res : Response)=>{
  
-  const requiredField = ["name", "surname", "email", "password", "role", "phone" , "name_supermercado" , "localidad" , "provincia" , "address" , "estado" , "fecha_solicitud" , "run"];
-  const{name, surname, email, password, role, phone , name_supermercado , localidad , provincia , address , estado , fecha_solicitud , run} = req.body;
+  const requiredField = ["name", "surname", "email", "password", "role", "phone" , "name_supermercado" , "departamento", "localidad" , "provincia" , "address" , "estado" , "fecha_solicitud" , "run"];
+  const{name, surname, email, password, role, phone , name_supermercado , localidad , provincia , address , departamento, estado , fecha_solicitud , run} = req.body;
   try{
     if(validateRequiredStrings(requiredField , req.body)){
       const newSolicitudSupermercado = await SolicitudSupermercado.create({
-        name, surname, email, password, role, phone , nameSupermercado: name_supermercado , localidad , provincia , address , estado , fecha_solicitud , run
+        name, surname, email, password, role, phone , nameSupermercado: name_supermercado , localidad , departamento, provincia , address , estado , fecha_solicitud , run
       })
       res.status(200).json({data : newSolicitudSupermercado})
     }
