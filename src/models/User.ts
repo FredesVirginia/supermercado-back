@@ -12,7 +12,7 @@ interface UserAttributes {
   email: string;
   role: UserRole;
   password?: string;
-  
+  dni: number,
   supermercado_id? : string
 }
 
@@ -29,7 +29,7 @@ class User extends Model<UserAttributes, UserCreationAttributes>
   public email!: string;
   public role!: UserRole;
   public password?: string;
-  
+  public dni! : number;
 
   // Timestamps automáticos
   public readonly createdAt!: Date;
@@ -84,6 +84,15 @@ const initUser = (sequelize: Sequelize): typeof User => {
         unique: true,
         validate: {
           isEmail: true,
+          notEmpty: true
+        }
+      },
+      dni: {
+        type: DataTypes.NUMBER,
+        allowNull: false,
+        unique: true,
+        validate: {
+         
           notEmpty: true
         }
       },

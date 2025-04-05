@@ -5,28 +5,42 @@ import jwt from "jsonwebtoken";
 import { validateRequiredStrings } from "../utils/utils";
 import { authMiddleware, roleMiddleware } from "../middelware/authMiddleware";
 import { UserRole } from "../types/types";
-import { SolicitudSupermercado, Supermercado, User } from "../db";
+import { sequelize, SolicitudSupermercado, Supermercado, User } from "../db";
 import { Op } from "sequelize";
 
 const routerUser = Router();
 
 routerUser.post("/register", async (req: any, res: any) => {
-  const { name, email, password, role, surname, phone } = req.body;
+  const { name, email, password, role, surname, phone, dni } = req.body;
+  const requiredFields = ["name", "email", "password", "role", "surname", "phone", "dni"];
   console.log("LE NNAMESA ES", req.body);
 
-  // VERIFICACIÓN DE EXISTENCIA DE USUARIO
-  const existingUser = await User.findOne({ where: { email } });
-  if (existingUser) {
-    return res.status(400).json({ message: "El usuario ya existe" });
+  if (validateRequiredStrings(requiredFields, req.body)) {
+    const existingUserDni = await User.findOne({
+      where: { dni },
+    });
+    if (existingUserDni) {
+      return res.status(409).json({ message: "DNI existente" });
+    }
+
+    if (!existingUserDni) {
+      const existingUserEmail = await User.findOne({
+        where: { email },
+      });
+      if (existingUserEmail) {
+        return res.status(409).json({ message: "Email existente" });
+      }
+      try {
+        const hasshedPassword = await bcrypt.hash(password, 10);
+        const newUser = await User.create({ name, surname, email, dni, password: hasshedPassword, role, phone });
+        return res.status(201).json({ message: "Usuario registrado correctamente", user: newUser });
+      } catch (error) {
+        res.status(500).json({ message: "Error al registrar usuario", error });
+      }
+    }
   }
 
-  try {
-    const hasshedPassword = await bcrypt.hash(password, 10);
-    const newUser = await User.create({ name, surname, email, password: hasshedPassword, role, phone });
-    res.status(201).json({ message: "Usuario registrado correctamente", user: newUser });
-  } catch (error) {
-    res.status(500).json({ message: "Error al registrar usuario", error });
-  }
+  res.status(404).json({message : "Campos implentos "})
 });
 
 routerUser.post("/login", async (req: any, res: any) => {
@@ -139,6 +153,7 @@ routerUser.post(
       "name",
       "surname",
       "email",
+      "dni",
       "password",
       "role",
       "phone",
@@ -149,27 +164,41 @@ routerUser.post(
       "address",
       "run",
     ];
-    const { name, surname, email, password, role, phone, nameSupermercado, localidad, departamento, provincia, address, run } =
-      req.body;
+    const {
+      name,
+      surname,
+      email,
+      dni,
+      password,
+      role,
+      phone,
+      nameSupermercado,
+      localidad,
+      departamento,
+      provincia,
+      address,
+      run,
+    } = req.body;
 
     try {
       if (validateRequiredStrings(requiredField, req.body)) {
-        const existinUser = await User.findOne({ where: { email } });
+        const existinUser = await User.findOne({ where: { dni } });
+
         const existingSupermarket = await Supermercado.findOne({
           where: {
             [Op.and]: [{ name: nameSupermercado }, { address: address }],
           },
         });
 
-        if (existingSupermarket) {
-          return res.status(409).json({
-            message: "Ya existe un supermercado con este nombre en esta direccion",
-          });
-        }
         if (!existinUser) {
+          if (existingSupermarket) {
+            return res.status(409).json({
+              message: "Ya existe un supermercado con este nombre en esta direccion",
+            });
+          }
           console.log("ÑO HAY");
           const hasshedPassword = await bcrypt.hash(password, 10);
-          const newUser = await User.create({ name, surname, email, password: hasshedPassword, role, phone });
+          const newUser = await User.create({ name, surname, email, dni, password: hasshedPassword, role, phone });
           if (!existingSupermarket) {
             const newSupermarket = await Supermercado.create({
               name: nameSupermercado,
@@ -191,7 +220,7 @@ routerUser.post(
           if (deleteSolicitud) {
             await deleteSolicitud.destroy();
           }
-          return res.status(200).json({ message: "Solicitud Aprobada 1" });
+          return res.status(200).json({ message: "Solicitud Aprobada " });
         } else {
           const newSupermarket = await Supermercado.create({
             name: nameSupermercado,
@@ -208,12 +237,18 @@ routerUser.post(
               [Op.and]: [{ email }, { nameSupermercado }, { address }],
             },
           });
+          if (deleteSolicitud) {
+            await deleteSolicitud.destroy();
+          }
 
-          return res.status(200).json({ message: "Solicitud Aprobada 2" });
+          return res.status(200).json({ message: "Solicitud Aprobada " });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log("EL ERROR ", error);
+      if (error.name === "SequelizeUniqueConstraintError") {
+        return res.status(400).json({ error: "El DNI ya está registrado" });
+      }
       res.status(500).json({ message: "Error Desconocido" });
     }
   }

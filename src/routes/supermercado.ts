@@ -239,11 +239,11 @@ routerSupermercado.get("/productos", async (req, res) => {
 routerSupermercado.post("/solicitud" , async (req : Request , res : Response)=>{
  
   const requiredField = ["name", "surname", "email", "password", "role", "phone" , "name_supermercado" , "departamento", "localidad" , "provincia" , "address" , "estado" , "fecha_solicitud" , "run"];
-  const{name, surname, email, password, role, phone , name_supermercado , localidad , provincia , address , departamento, estado , fecha_solicitud , run} = req.body;
+  const{name, surname, email, password, role,dni, phone , name_supermercado , localidad , provincia , address , departamento, estado , fecha_solicitud , run} = req.body;
   try{
     if(validateRequiredStrings(requiredField , req.body)){
       const newSolicitudSupermercado = await SolicitudSupermercado.create({
-        name, surname, email, password, role, phone , nameSupermercado: name_supermercado , localidad , provincia , departamento : departamento, address , estado , fecha_solicitud , run
+        name, surname, email, password, role, phone ,dni, nameSupermercado: name_supermercado , localidad , provincia , departamento : departamento, address , estado , fecha_solicitud , run
       })
       res.status(200).json({data : newSolicitudSupermercado})
     }

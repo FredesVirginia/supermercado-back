@@ -8,6 +8,7 @@ interface SolicitudSupermercadoAttributes {
     surname: string;
     phone: string;
     email: string;
+    dni:number;
     role: UserRole;
     password?: string;
     
@@ -34,7 +35,7 @@ interface SolicitudSupermercadoAttributes {
     public email!: string;
     public role!: UserRole;
     public password?: string;
-  
+    public dni!:number
     public nameSupermercado!: string;
     public address!: string;
     public provincia!: string;
@@ -75,6 +76,12 @@ interface SolicitudSupermercadoAttributes {
           }
         },
         phone: {
+          type: DataTypes.STRING,
+          allowNull: false,
+         
+        },
+
+        dni: {
           type: DataTypes.STRING,
           allowNull: false,
          
