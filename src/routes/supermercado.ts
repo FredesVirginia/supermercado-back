@@ -178,39 +178,94 @@ routerSupermercado.get( "/category",authMiddleware,roleMiddleware([UserRole.ADMI
 
 routerSupermercado.get("/promociones", getProductosConDescuento);
 
+// routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
+//   try {
+    
+//     const conteo = await Categoria.findAll({
+//       attributes: {
+//         include: [[Sequelize.fn("COUNT", "productos.id"), "cantidad"]],
+//       },
+//       include: [
+//         {
+//           model: Producto,
+//           as: "productos",
+//           attributes: [],
+//         },
+//       ],
+//       group: ["Categoria.id"],
+//       raw: true, 
+//     });
+
+//     // Formato de salida
+//     const totalProductos = conteo.map((categoria: CategoriaAttributes) => ({
+//       cantidad: categoria.cantidad,
+//       categoria: categoria.name,
+//     }));
+
+//     const totalProductosMenorStock = totalProductos.filter((q: { cantidad: number }) => q.cantidad < 10);
+
+//     res.json(totalProductosMenorStock);
+//   } catch (error) {
+//     console.error("Error:", error);
+//     res.status(500).json({ mensaje: "Error al obtener datos" });
+//   }
+// });
+
 routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
   try {
-    
     const conteo = await Categoria.findAll({
-      attributes: {
-        include: [[Sequelize.fn("COUNT", "productos.id"), "cantidad"]],
-      },
+      attributes: [
+        'id',
+        'name',
+        [Sequelize.fn("COUNT", Sequelize.col("productos.id")), "cantidad"],
+        [Sequelize.col("productos.proveedor.id"), "proveedor_id"],
+        [Sequelize.col("productos.proveedor.name"), "proveedor_name"],
+        [Sequelize.col("productos.proveedor.email"), "proveedor_email"],
+        [Sequelize.col("productos.proveedor.phone"), "proveedor_phone"]
+      ],
       include: [
         {
           model: Producto,
           as: "productos",
           attributes: [],
-        },
+          include: [
+            {
+              model: Proveedor,
+              as: "proveedor",
+              attributes: [],
+              required: true
+            }
+          ]
+        }
       ],
-      group: ["Categoria.id"],
-      raw: true, 
+      group: ['Categoria.id', 'productos.proveedor.id'],
+      raw: true
     });
 
-    // Formato de salida
-    const totalProductos = conteo.map((categoria: CategoriaAttributes) => ({
-      cantidad: categoria.cantidad,
-      categoria: categoria.name,
+    // Formatear resultados
+    const resultado = conteo.map((item: any) => ({
+      categoria: {
+        id: item.id,
+        nombre: item.name,
+      },
+      proveedor: {
+        id: item.proveedor_id,
+        nombre: item.proveedor_name,
+        correo: item.proveedor_email,
+        telefono: item.proveedor_phone
+      },
+      cantidad: item.cantidad
     }));
 
-    const totalProductosMenorStock = totalProductos.filter((q: { cantidad: number }) => q.cantidad < 10);
+    // Filtrar productos con stock < 10
+    const conStockBajo = resultado.filter((item: any) => item.cantidad < 10);
 
-    res.json(totalProductosMenorStock);
+    res.json(conStockBajo);
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ mensaje: "Error al obtener datos" });
   }
 });
-
 routerSupermercado.get("/productos", async (req, res) => {
   try {
    
