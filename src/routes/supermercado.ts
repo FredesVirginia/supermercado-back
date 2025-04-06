@@ -180,7 +180,7 @@ routerSupermercado.get("/promociones", getProductosConDescuento);
 
 routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
   try {
-    //Esta opción es crucial. Indica a Sequelize que devuelva objetos planos en lugar de instancias complejas de modelos. Esto simplifica el acceso a los datos.
+    
     const conteo = await Categoria.findAll({
       attributes: {
         include: [[Sequelize.fn("COUNT", "productos.id"), "cantidad"]],
@@ -193,7 +193,7 @@ routerSupermercado.get("/productos/stock", async (req: Request, res: Response) =
         },
       ],
       group: ["Categoria.id"],
-      raw: true, // Añade esta línea
+      raw: true, 
     });
 
     // Formato de salida

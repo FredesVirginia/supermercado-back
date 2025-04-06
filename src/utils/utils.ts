@@ -4,7 +4,7 @@ import { Request, Response } from "express";
 import { Producto } from "../db";
 
 export function validateRequiredStrings(obj: any, fields: string[]) {
-  console.log("fields es", fields);
+ 
   for (const field of fields) {
     if (obj[field] === null || obj[field] === undefined) {
       return false;

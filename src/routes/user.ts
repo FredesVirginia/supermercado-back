@@ -13,14 +13,14 @@ const routerUser = Router();
 routerUser.post("/register", async (req: any, res: any) => {
   const { name, email, password, role, surname, phone, dni } = req.body;
   const requiredFields = ["name", "email", "password", "role", "surname", "phone", "dni"];
-  console.log("LE NNAMESA ES", req.body);
+
 
   if (validateRequiredStrings(requiredFields, req.body)) {
     const existingUserDni = await User.findOne({
       where: { dni },
     });
     if (existingUserDni) {
-      return res.status(409).json({ message: "DNI existente" });
+      return res.status(409).json({ message: "DNI existente"  , status : 409});
     }
 
     if (!existingUserDni) {
@@ -28,19 +28,22 @@ routerUser.post("/register", async (req: any, res: any) => {
         where: { email },
       });
       if (existingUserEmail) {
-        return res.status(409).json({ message: "Email existente" });
+        return res.status(409).json({ message: "Email existente" , status : 409});
       }
       try {
         const hasshedPassword = await bcrypt.hash(password, 10);
         const newUser = await User.create({ name, surname, email, dni, password: hasshedPassword, role, phone });
-        return res.status(201).json({ message: "Usuario registrado correctamente", user: newUser });
+        const userData = newUser.get({ plain: true });
+        delete userData.password;
+       
+        return res.status(201).json({ message: "Usuario registrado correctamente", user: userData });
       } catch (error) {
-        res.status(500).json({ message: "Error al registrar usuario", error });
+        res.status(500).json({ message: "Error al registrar usuario", error ,  status : 500 });
       }
     }
   }
 
-  res.status(404).json({message : "Campos implentos "})
+  res.status(404).json({message : "Campos incompletos "})
 });
 
 routerUser.post("/login", async (req: any, res: any) => {
@@ -118,7 +121,7 @@ routerUser.post("/login", async (req: any, res: any) => {
 routerUser.post("/addSupermarket", authMiddleware, roleMiddleware([UserRole.SUPER_ADMIN]), async (req: any, res: any) => {
   const requiredFields = ["name", "address", "provincia", "localidad"];
   const { admidEmail, supermercado } = req.body;
-  console.log("EL ADMINES ", admidEmail, "Y SUPERMEADO", supermercado);
+ 
   try {
     if (admidEmail && admidEmail !== "") {
       const user = await User.findOne({ where: { email: admidEmail } });
@@ -128,6 +131,20 @@ routerUser.post("/addSupermarket", authMiddleware, roleMiddleware([UserRole.SUPE
             ...supermercado,
             admin_id: user.getDataValue("id"),
           });
+
+          const deleteSolicitud = await SolicitudSupermercado.findOne({
+            where: {
+              [Op.and]: [{ email: user.email }, { nameSupermercado : newSupermarket.name }, { address : newSupermarket.address }],
+            },
+          });
+
+       
+          if (deleteSolicitud) {
+           
+            await deleteSolicitud.destroy();
+          }else{
+            console.log("ÑO EXISTE" , deleteSolicitud)
+          }
 
           return res.status(200).json({ data: newSupermarket });
         } else {
