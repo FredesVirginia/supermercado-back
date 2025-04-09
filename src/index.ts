@@ -3,6 +3,7 @@ import { conn } from "./db";
 import { setupSocket } from "./socket/socket";
 import { checkExpiringProducts } from "./services/descuentoServices";
 import cron from "node-cron";
+import { sendEmailPromotions } from "./controllers/sendEmail";
 
 const httpServer = setupSocket(server); // Usa setupSocket
 
@@ -17,3 +18,9 @@ cron.schedule("21 03 * * *", () => {
   console.log("Revisando productos proximos a expirar ...");
   checkExpiringProducts();
 });
+
+cron.schedule("21 02 * * * " ,()=>{
+  console.log("INICIANDO ENVIO DE CORREOS");
+  sendEmailPromotions()
+
+} )
