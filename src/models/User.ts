@@ -1,7 +1,7 @@
 import { DataTypes, Sequelize, Model, Optional } from 'sequelize';
 
 // Tipos para el enum de roles
-export type UserRole = 'admin' | 'super-admin' | 'invited';
+export type UserRole = 'admin' | 'super-admin' | 'invited' | 'client';
 
 // Interface para los atributos del User
 interface UserAttributes {
@@ -97,11 +97,11 @@ const initUser = (sequelize: Sequelize): typeof User => {
         }
       },
       role: {
-        type: DataTypes.ENUM('admin', 'super-admin', 'invited'),
+        type: DataTypes.ENUM('admin', 'super-admin', 'invited' , 'client'),
         allowNull: false,
         defaultValue: 'admin',
         validate: {
-          isIn: [['admin', 'super-admin', 'invited']]
+          isIn: [['admin', 'super-admin', 'invited' , 'client']]
         }
       },
       password: {

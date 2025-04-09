@@ -3,13 +3,13 @@ import { authMiddleware, roleMiddleware } from "../middelware/authMiddleware";
 import { UserRole } from "../types/types";
 import { getProductosConDescuento, validateRequiredStrings } from "../utils/utils";
 import { Op, Sequelize, where } from "sequelize";
-import { Categoria, Producto, Proveedor, Supermercado, User , SolicitudSupermercado} from "../db";
+import { Categoria, Producto, Proveedor, Supermercado, User, SolicitudSupermercado } from "../db";
 import { CategoriaAttributes } from "../models/Categoria";
 
 const routerSupermercado = Router();
 
 routerSupermercado.post("/add", authMiddleware, roleMiddleware([UserRole.SUPER_ADMIN]), async (req: any, res: any) => {
-  const requiredFields = ["name", "address", "provincia", "departamento","localidad"];
+  const requiredFields = ["name", "address", "provincia", "departamento", "localidad"];
   const { admidEmail, supermercado } = req.body;
 
   try {
@@ -49,9 +49,13 @@ routerSupermercado.post("/add", authMiddleware, roleMiddleware([UserRole.SUPER_A
   }
 });
 
-routerSupermercado.post("/add/product",authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+routerSupermercado.post(
+  "/add/product",
+  authMiddleware,
+  roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
-    const requiredField = [ "marca",
+    const requiredField = [
+      "marca",
       "preciodescuento",
       "fechavencimiento",
       "precio",
@@ -64,7 +68,6 @@ routerSupermercado.post("/add/product",authMiddleware,roleMiddleware([UserRole.A
       if (validateRequiredStrings(req.body, requiredField)) {
         const existingCategory = await Categoria.findOne({ where: { name: categoria } });
         const existingProveedor = await Proveedor.findOne({ where: { name: nombreProveedor } });
-     
 
         console.log("PROVEEDOR ", existingProveedor);
         const product = await Producto.create({
@@ -89,7 +92,10 @@ routerSupermercado.post("/add/product",authMiddleware,roleMiddleware([UserRole.A
   }
 );
 
-routerSupermercado.post("/add/proveedor",authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+routerSupermercado.post(
+  "/add/proveedor",
+  authMiddleware,
+  roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     const requiredField = ["name", "razonSocial", "cuit", "direccion", "phone", "email"];
     const { name, razonSocial, cuit, direccion, phone, email } = req.body;
@@ -122,7 +128,10 @@ routerSupermercado.post("/add/proveedor",authMiddleware,roleMiddleware([UserRole
   }
 );
 
-routerSupermercado.post("/add/category",authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+routerSupermercado.post(
+  "/add/category",
+  authMiddleware,
+  roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     const categoryNames: string[] = req.body;
     try {
@@ -160,7 +169,10 @@ routerSupermercado.post("/add/category",authMiddleware,roleMiddleware([UserRole.
   }
 );
 
-routerSupermercado.get( "/category",authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+routerSupermercado.get(
+  "/category",
+  authMiddleware,
+  roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     try {
       const allCategory = await Categoria.findAll({
@@ -176,11 +188,48 @@ routerSupermercado.get( "/category",authMiddleware,roleMiddleware([UserRole.ADMI
   }
 );
 
-routerSupermercado.get("/promociones", getProductosConDescuento);
+routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
+  try {
+    const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = await Promise.all([
+      Producto.findAll({
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
+        where: { descuento: { [Op.eq]: 10 } },
+      }),
+      Producto.findAll({
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
+        where: { descuento: { [Op.eq]: 20 } },
+      }),
+      Producto.findAll({
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
+        where: { descuento: { [Op.eq]: 30 } },
+      }),
+    ]);
+
+    const productoAgrupados = [
+      {
+        cantidad: productosDescuento5Dias.length,
+        productos: productosDescuento5Dias,
+      },
+      {
+        cantidad: productosDescuento10Dias.length,
+        productos: productosDescuento10Dias,
+      },
+      {
+        cantidad: productosDescuento15Dias.length,
+        productos: productosDescuento15Dias,
+      },
+    ];
+
+    res.status(200).json(productoAgrupados);
+  } catch (error) {
+    console.log("Error al obtener productos con descuento ", error);
+    res.status(500).json({ message: "Error interno en el servidor" }); // Corregido "Erro" → "Error"
+  }
+});
 
 // routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
 //   try {
-    
+
 //     const conteo = await Categoria.findAll({
 //       attributes: {
 //         include: [[Sequelize.fn("COUNT", "productos.id"), "cantidad"]],
@@ -193,7 +242,7 @@ routerSupermercado.get("/promociones", getProductosConDescuento);
 //         },
 //       ],
 //       group: ["Categoria.id"],
-//       raw: true, 
+//       raw: true,
 //     });
 
 //     // Formato de salida
@@ -215,13 +264,13 @@ routerSupermercado.get("/productos/stock", async (req: Request, res: Response) =
   try {
     const conteo = await Categoria.findAll({
       attributes: [
-        'id',
-        'name',
+        "id",
+        "name",
         [Sequelize.fn("COUNT", Sequelize.col("productos.id")), "cantidad"],
         [Sequelize.col("productos.proveedor.id"), "proveedor_id"],
         [Sequelize.col("productos.proveedor.name"), "proveedor_name"],
         [Sequelize.col("productos.proveedor.email"), "proveedor_email"],
-        [Sequelize.col("productos.proveedor.phone"), "proveedor_phone"]
+        [Sequelize.col("productos.proveedor.phone"), "proveedor_phone"],
       ],
       include: [
         {
@@ -233,13 +282,13 @@ routerSupermercado.get("/productos/stock", async (req: Request, res: Response) =
               model: Proveedor,
               as: "proveedor",
               attributes: [],
-              required: true
-            }
-          ]
-        }
+              required: true,
+            },
+          ],
+        },
       ],
-      group: ['Categoria.id', 'productos.proveedor.id'],
-      raw: true
+      group: ["Categoria.id", "productos.proveedor.id"],
+      raw: true,
     });
 
     // Formatear resultados
@@ -252,9 +301,9 @@ routerSupermercado.get("/productos/stock", async (req: Request, res: Response) =
         id: item.proveedor_id,
         nombre: item.proveedor_name,
         correo: item.proveedor_email,
-        telefono: item.proveedor_phone
+        telefono: item.proveedor_phone,
       },
-      cantidad: item.cantidad
+      cantidad: item.cantidad,
     }));
 
     // Filtrar productos con stock < 10
@@ -268,7 +317,6 @@ routerSupermercado.get("/productos/stock", async (req: Request, res: Response) =
 });
 routerSupermercado.get("/productos", async (req, res) => {
   try {
-   
     const [totalProductos, productosConDescuento] = await Promise.all([
       Producto.count(),
       Producto.count({ where: { descuento: { [Op.gt]: 0 } } }),
@@ -290,35 +338,79 @@ routerSupermercado.get("/productos", async (req, res) => {
   }
 });
 
-
-routerSupermercado.post("/solicitud" , async (req : Request , res : Response)=>{
- 
-  const requiredField = ["name", "surname", "email", "password", "role", "phone" , "name_supermercado" , "departamento", "localidad" , "provincia" , "address" , "estado" , "fecha_solicitud" , "run"];
-  const{name, surname, email, password, role,dni, phone , name_supermercado , localidad , provincia , address , departamento, estado , fecha_solicitud , run} = req.body;
-  try{
-    if(validateRequiredStrings(requiredField , req.body)){
+routerSupermercado.post("/solicitud", async (req: Request, res: Response) => {
+  const requiredField = [
+    "name",
+    "surname",
+    "email",
+    "password",
+    "role",
+    "phone",
+    "name_supermercado",
+    "departamento",
+    "localidad",
+    "provincia",
+    "address",
+    "estado",
+    "fecha_solicitud",
+    "run",
+  ];
+  const {
+    name,
+    surname,
+    email,
+    password,
+    role,
+    dni,
+    phone,
+    name_supermercado,
+    localidad,
+    provincia,
+    address,
+    departamento,
+    estado,
+    fecha_solicitud,
+    run,
+  } = req.body;
+  try {
+    if (validateRequiredStrings(requiredField, req.body)) {
       const newSolicitudSupermercado = await SolicitudSupermercado.create({
-        name, surname, email, password, role, phone ,dni, nameSupermercado: name_supermercado , localidad , provincia , departamento : departamento, address , estado , fecha_solicitud , run
-      })
-      res.status(200).json({data : newSolicitudSupermercado})
+        name,
+        surname,
+        email,
+        password,
+        role,
+        phone,
+        dni,
+        nameSupermercado: name_supermercado,
+        localidad,
+        provincia,
+        departamento: departamento,
+        address,
+        estado,
+        fecha_solicitud,
+        run,
+      });
+      res.status(200).json({ data: newSolicitudSupermercado });
     }
-  }catch(error){ 
-    console.log("El error fue" , error);
-    res.status(500).json({message : error})
+  } catch (error) {
+    console.log("El error fue", error);
+    res.status(500).json({ message: error });
   }
+});
 
-  
-})
-
-routerSupermercado.get("/lista/solicitud/supermercados" , authMiddleware , roleMiddleware([UserRole.SUPER_ADMIN]) , async (req : Request , res : Response)=>{
-  try{
-    const listSolicitudeSupermarket = await SolicitudSupermercado.findAll();
-    res.status(200).json({data : listSolicitudeSupermarket})
-  }catch(error ){
-    res.status(500).json({message : error})
+routerSupermercado.get(
+  "/lista/solicitud/supermercados",
+  authMiddleware,
+  roleMiddleware([UserRole.SUPER_ADMIN]),
+  async (req: Request, res: Response) => {
+    try {
+      const listSolicitudeSupermarket = await SolicitudSupermercado.findAll();
+      res.status(200).json({ data: listSolicitudeSupermarket });
+    } catch (error) {
+      res.status(500).json({ message: error });
+    }
   }
-})
-
-
+);
 
 export default routerSupermercado;
