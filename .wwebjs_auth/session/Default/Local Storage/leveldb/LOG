@@ -1,0 +1,6 @@
+2025/04/09-04:04:15.190 3794 Reusing MANIFEST C:\dev\supermercado-back\.wwebjs_auth\session\Default\Local Storage\leveldb/MANIFEST-000001
+2025/04/09-04:04:15.191 3794 Recovering log #3
+2025/04/09-04:04:15.192 3794 Reusing old log C:\dev\supermercado-back\.wwebjs_auth\session\Default\Local Storage\leveldb/000003.log 
+2025/04/09-04:05:15.837 3344 Level-0 table #5: started
+2025/04/09-04:05:15.841 3344 Level-0 table #5: 19801 bytes OK
+2025/04/09-04:05:15.844 3344 Delete type=0 #3
