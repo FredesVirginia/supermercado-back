@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest  # Corregido "ubunto" → "ubuntu"
     steps:
       - name: Checkout Repo  # Espacio después del guión
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Connect to AWS
         uses: aws-actions/configure-aws-credentials@v1  # Corregido "aws_actions" → "aws-actions"
