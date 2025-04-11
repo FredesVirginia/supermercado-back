@@ -1,0 +1,26 @@
+name : S3 sync action
+
+on : workflow_dispatch:
+     push :
+       branches :
+            -master
+permissions :
+      id-token : write
+      contents : read
+
+jobs:
+  sync:
+    runs-on : ubunto-latest
+    steps:
+      -name : Checkout Repo
+      uses : actions/checkout@v2
+
+      -name : Connect to AWS
+      uses : aws_actions/configure-aws-credentials@v1
+      with:
+        role-session-name: awssynsession
+        role-to-assume : ${{secrets.AWS_IAM_ROLE }}
+        aws-region: ${{ secrets.AWS_REGION}}
+      -name : sync bucket
+      run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete
+            
