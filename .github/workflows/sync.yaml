@@ -25,4 +25,9 @@ jobs:
           aws-region: us-east-2
 
       - name: Sync bucket
-        run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete
+        run:  |
+              if [ -d "./dist" ]; then
+                echo "dist exists ✅"
+              else
+                echo "dist does NOT exist ❌"
+              fi
