@@ -1,26 +1,28 @@
-name : S3 sync action
+name: S3 sync action
 
-on : workflow_dispatch:
-     push :
-       branches :
-            -master
-permissions :
-      id-token : write
-      contents : read
+on: 
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   sync:
-    runs-on : ubunto-latest
+    runs-on: ubuntu-latest  # Corregido "ubunto" → "ubuntu"
     steps:
-      -name : Checkout Repo
-      uses : actions/checkout@v2
+      - name: Checkout Repo  # Espacio después del guión
+        uses: actions/checkout@v2
 
-      -name : Connect to AWS
-      uses : aws_actions/configure-aws-credentials@v1
-      with:
-        role-session-name: awssynsession
-        role-to-assume : ${{secrets.AWS_IAM_ROLE }}
-        aws-region: ${{ secrets.AWS_REGION}}
-      -name : sync bucket
-      run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete
-            
+      - name: Connect to AWS
+        uses: aws-actions/configure-aws-credentials@v1  # Corregido "aws_actions" → "aws-actions"
+        with:
+          role-session-name: awssynsession
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Sync bucket
+        run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete
