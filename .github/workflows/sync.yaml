@@ -43,44 +43,44 @@ jobs:
         run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete
 
   deploy_to_ec2:
-  needs: build_and_sync
-  runs-on: ubuntu-latest
+     needs: build_and_sync
+     runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout Repo
-      uses: actions/checkout@v3
+     steps:
+        - name: Checkout Repo
+          uses: actions/checkout@v3
 
-    - name: Save private key to file
-      run: |
-        echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
-        chmod 600 key.pem
+        - name: Save private key to file
+          run: |
+            echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+            chmod 600 key.pem
 
-    - name: Copy build to EC2
-      uses: appleboy/scp-action@v0.1.1
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key_path: key.pem
-        source: "dist/"
-        target: "/home/ubuntu/supermercado-back"
+        - name: Copy build to EC2
+          uses: appleboy/scp-action@v0.1.1
+          with:
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key_path: key.pem
+            source: "dist/"
+            target: "/home/ubuntu/supermercado-back"
 
-    - name: List files on EC2 to confirm upload
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key_path: key.pem
-        script: |
-          ls -la /home/ubuntu/supermercado-back
+        - name: List files on EC2 to confirm upload
+          uses: appleboy/ssh-action@v1.0.0
+          with:
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key_path: key.pem
+            script: |
+              ls -la /home/ubuntu/supermercado-back
 
-    - name: SSH and deploy to EC2
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key_path: key.pem
-        script: |
-          cd /home/ubuntu/supermercado-back
-          docker-compose down
-          docker-compose build --no-cache
-          docker-compose up -d
+        - name: SSH and deploy to EC2
+          uses: appleboy/ssh-action@v1.0.0
+          with:
+            host: ${{ secrets.EC2_HOST }}
+            username: ${{ secrets.EC2_USER }}
+            key_path: key.pem
+            script: |
+              cd /home/ubuntu/supermercado-back
+              docker-compose down
+              docker-compose build --no-cache
+              docker-compose up -d
