@@ -57,31 +57,7 @@ jobs:
           ls -al config/
 
       # Paso para subir los artefactos si es necesario (asegurándote de que se generen correctamente)
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-files
-          path: |
-            dist/
-            Dockerfile
-            docker-compose.yml
-            package.json
-            package-lock.json
-            src/
-            config/
-            .env.production
-
-      # Paso para descargar los artefactos en el entorno de despliegue (EC2)
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: build-files
-
-      # Paso para mover los archivos descargados a la raíz del directorio
-      - name: Move build files to root
-        run: |
-          mv build-files/* .
-          mv build-files/.* . || true
+     
     
 
 
