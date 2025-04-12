@@ -17,7 +17,7 @@ env:
 jobs:
  
   deploy_to_ec2:
-    needs: build_and_sync
+   
     runs-on: ubuntu-latest
 
     steps:
