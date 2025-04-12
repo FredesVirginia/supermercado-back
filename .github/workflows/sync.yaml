@@ -44,7 +44,7 @@ jobs:
       - name: Sync dist/ to S3
         run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete
 
-  deploy_to_ec2:
+ 
     needs: build_and_sync
     runs-on: ubuntu-latest
 
