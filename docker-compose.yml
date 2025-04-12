@@ -1,20 +1,8 @@
-
-# services:
-#   api:
-#     volumes:
-#       - C:\Users\Willi\OneDrive\Documentos\Stydy\Supermercado\API:/build
-#     image: node:20.16-alpine3.19
-#     env_file: .env.docker
-#     build: .  # Usa el Dockerfile
-#     command: ["node", "dist/src/index.js"] 
-#     ports:
-#       - "8000:8000"
-   
-
 version: '3.8'
 
 services:
   app:
+
     build: .
     ports:
       - "3000:3000"
