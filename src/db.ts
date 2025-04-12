@@ -4,7 +4,7 @@ require("dotenv").config();
 const { Sequelize } = require("sequelize");
 const fs = require("fs");
 const path = require("path");
-const { DB_USER, DB_PASSWORD, DB_HOST , DB_DATABASE } = process.env;
+const { DB_USER, DB_PASSWORD, DB_HOST , DB_DATABASE  } = process.env;
 
 import initUser from "./models/User";
 import initCategoria from "./models/Categoria";
@@ -16,18 +16,24 @@ import initReporte from "./models/Reporte";
 import initSupermercado from "./models/Supermercado";
 import initProveedor from "./models/Proveedor"
 import initSolicitudSupermercado from "./models/SolicitudesSupermercados"
+const isProduction = process.env.NODE_ENV === 'production';
+// console.log("LA INS PRDUCO ES " , isProduction)
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_DATABASE}`, {
  dialect: 'postgres',
-  dialectOptions: { // <-- ¡Esto es clave para RDS!
-    ssl: {
-      require: true,          // Obliga SSL
-      rejectUnauthorized: false // Necesario para certificados autofirmados de AWS
-    }
-  },
+ dialectOptions: isProduction
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false,
+        },
+      }
+    : {},
 
   logging: false, // set to console.log to see the raw SQL queries
   native: false, // lets Sequelize know we can use pg-native for ~30% more speed
 });
+
+
 const basename = path.basename(__filename);
 
 const modelDefiners: any[] = [];

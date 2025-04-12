@@ -5,7 +5,7 @@ import { checkExpiringProducts } from "./services/descuentoServices";
 import cron from "node-cron";
 //import { sendEmailPromotions } from "./controllers/sendEmail";
 
-const httpServer = setupSocket(server); // Usa setupSocket
+const httpServer = setupSocket(server); // Usa setupSocketi
 
 // Syncing all the models at once.
 conn.sync({ force: false }).then(() => {
