@@ -10,6 +10,11 @@ permissions:
   id-token: write
   contents: read
 
+name: Debug private key
+  run: |
+    echo "${{ secrets.EC2_SSH_KEY }}" | head -n 5
+
+
 jobs:
   build_and_sync:
     runs-on: ubuntu-latest
