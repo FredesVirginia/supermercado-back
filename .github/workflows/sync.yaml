@@ -85,18 +85,16 @@ jobs:
           name: build-files
           path: build-files
 
-      - name: Verificar contenido descargado
+      - name: Verify content downloaded
         run: |
           ls -al
-          ls -al build-files || echo "No existe la carpeta build-files"
+          echo "-------------------------"
+          ls -al build-files
 
-      - name: Move build files to root
+      - name: Copy build files to root
         run: |
-          mv build-files/* .
-          mv build-files/.* . || true
-
-      - name: List files in dist/
-        run: ls -al ./dist
+          rsync -av build-files/ ./
+    
 
 
       - name: Copy only essential files to EC2
