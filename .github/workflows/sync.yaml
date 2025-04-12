@@ -21,7 +21,7 @@ jobs:
           aws-region: us-east-2
 
       # Opcional: build y push a ECR si usas imágenes personalizadas
-      # Puedes quitar esto si no usas ECR y solo haces el build en EC
+      # Puedes quitar esto si no usas ECR y solo haces el build en E
       # - name: Build and Push to ECR
       #   ...
 
