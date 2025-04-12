@@ -1,14 +1,18 @@
 name: Deploy to EC2 and S3
 
 on:
-  workflow_dispatch:  # Ejecutable manualmente
+  workflow_dispatch:
   push:
     branches:
-      - master         # Se ejecuta con push a master
+      - master
 
 permissions:
   id-token: write
   contents: read
+
+env:
+  AWS_REGION: us-east-2
+  PROJECT_DIR: /home/ubuntu/supermercado-back
 
 jobs:
   build_and_sync:
@@ -16,45 +20,69 @@ jobs:
 
     steps:
       - name: Checkout Repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci # Usamos ci para instalación limpia basada en lockfile
 
       - name: Build project
         run: npm run build
 
       - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Sync dist/ to S3
-        run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete
+        run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete --size-only
 
   deploy_to_ec2:
-    needs: build_and_sync  # Espera a que termine el anterior
+    needs: build_and_sync
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necesario para copiar archivos específicos
+
+      - name: Copy only essential files to EC2
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: |
+            Dockerfile
+            docker-compose.yml
+            package.json
+            package-lock.json
+            src/
+            config/
+            .env.production
+            # Añade otros archivos/directorios necesarios
+          target: ${{ env.PROJECT_DIR }}
+          strip_components: 1
+
       - name: SSH and deploy to EC2
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/mi-app-back  # Cambiá esto por tu ruta real
-            git pull origin master
-            docker-compose down
-            docker-compose build --no-cache
-            docker-compose up -d
-
+            cd ${{ env.PROJECT_DIR }}
+            docker system prune -f # Limpieza de recursos no utilizados
+            docker-compose down --remove-orphans
+            docker-compose build --no-cache --pull
+            docker-compose up -d --force-recreate
+            docker image prune -f # Limpieza de imágenes no utilizadas
 
