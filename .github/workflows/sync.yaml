@@ -22,7 +22,7 @@ jobs:
 
       # Opcional: build y push a ECR si usas imágenes personalizadas
       # Puedes quitar esto si no usas ECR y solo haces el build en E
-      # - name: Build and Push to EC
+      # - name: Build and Push to
       #   ...
 
       - name: Deploy to EC2 via SSH
