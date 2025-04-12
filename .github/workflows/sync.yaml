@@ -1,34 +1,47 @@
-name: Deploy to EC2 and S3 (TypeScript)
-
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - master
-
-env:
-  AWS_REGION: us-east-2
-  PROJECT_DIR: /home/ubuntu/supermercado-back
-  NODE_ENV: production
-
 jobs:
   build_and_sync:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+
+      # === ELIGE SOLO UNA OPCIÓN SEGÚN TU ERROR === #
+
+      # OPCIÓN 1 (Si falla Node.js/npm) ▼
+      - name: Install Node.js manually
+        if: ${{ failure() }}  # Solo se ejecuta si fallan los pasos anteriores
+        run: |
+          curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          node -v && npm -v
+
+      # OPCIÓN 2 (Si falla AWS CLI) ▼
+      - name: Install AWS CLI manually
+        if: ${{ failure() }}
+        run: |
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+          aws --version
+
+      # OPCIÓN 3 (Si falla el build de TypeScript) ▼
+      - name: Debug TypeScript build
+        if: ${{ failure() }}
+        run: |
+          npm install -g typescript
+          npm run build --verbose
+          ls -la dist/
+      # === FIN DE OPCIONES === #
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build TypeScript project
+      - name: Build project
         run: npm run build
 
       - name: Configure AWS Credentials
@@ -36,56 +49,8 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-east-2
 
-      - name: Sync assets to S3
+      - name: Sync dist/ to S3
         run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete --size-only
-
-  deploy_to_ec2:
-    needs: build_and_sync
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-
-      - name: Prepare deployment bundle (TypeScript)
-        run: |
-          mkdir -p deploy
-          cp Dockerfile docker-compose.yml package*.json tsconfig.json deploy/
-          cp -r src config dist deploy/
-          if [ -f .env.production ]; then cp .env.production deploy/; fi
-          tar -czf deploy.tar.gz -C deploy .
-
-      - name: Upload bundle to EC2
-        uses: appleboy/scp-action@v0.1.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "deploy.tar.gz"
-          target: ${{ env.PROJECT_DIR }}
-
-      - name: Deploy on EC2
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd ${{ env.PROJECT_DIR }}
-            tar -xzf deploy.tar.gz
-            rm deploy.tar.gz
-            
-            # Instalar dependencias de producción
-            npm ci --only=production
-            
-            # Docker deployment
-            docker-compose down --remove-orphans
-            docker-compose build --no-cache --pull
-            docker-compose up -d --force-recreate
-            
-            # Cleanup
-            docker system prune -f
-            docker image prune -f
 
