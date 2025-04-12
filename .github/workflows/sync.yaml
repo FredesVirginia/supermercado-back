@@ -35,7 +35,9 @@ jobs:
         run: npm run build
 
       - name: List files in project root
-        run: ls -al
+        run: |
+            echo "LIST FILES IN DIST DIRECTORY"
+            ls -al ./dist
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
