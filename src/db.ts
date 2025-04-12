@@ -17,7 +17,7 @@ import initProveedor from "./models/Proveedor"
 import initSolicitudSupermercado from "./models/SolicitudesSupermercados"
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_DATABASE}`, {
   dialect: 'postgres',
-  dialectOptions: { // <-- ¡Esto es clave para RDS
+  dialectOptions: { // <-- ¡Esto es clave para RDS!
     ssl: {
       require: true,          // Obliga SSL
       rejectUnauthorized: false // Necesario para certificados autofirmados de AWS
