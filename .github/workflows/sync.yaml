@@ -59,7 +59,11 @@ jobs:
       # Paso para subir los artefactos si es necesario (asegurándote de que se generen correctamente)
      
     
-
+      - name: Show workspace files
+        run: |
+          echo "Current dir: $(pwd)"
+          ls -la
+          ls -la dist
       - name: Copy essential files to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
