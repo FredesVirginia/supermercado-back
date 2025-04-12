@@ -1,19 +1,98 @@
 name: Deploy to EC2 and S3
 
 on:
-  workflow_dispatch:  # Ejecutable manualmente
   push:
     branches:
-      - master         # Se ejecuta con push a master
+      - master
 
 permissions:
   id-token: write
   contents: read
 
-
-
-
 jobs:
+  build_and_sync:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Upload dist as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dist
+          path: dist
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Sync dist/ to S3
+        run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete
+
+  deploy_to_ec2:
+    needs: build_and_sync
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Download dist artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: dist
+          path: dist
+
+      - name: Save private key to file
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > key.pem
+          chmod 600 key.pem
+
+      - name: Copy build to EC2
+        uses: appleboy/scp-action@v0.1.1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key_path: key.pem
+          source: "dist/"
+          target: "/home/ubuntu/supermercado-back"
+
+      - name: List files on EC2 to confirm upload
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key_path: key.pem
+          script: |
+            ls -la /home/ubuntu/supermercado-back
+
+      - name: SSH and deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key_path: key.pem
+          script: |
+            cd /home/ubuntu/supermercado-back
+            docker-compose down
+            docker-compose build --no-cache
+            docker-compose up -d
+
   build_and_sync:
     runs-on: ubuntu-latest
 
