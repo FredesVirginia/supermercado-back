@@ -1,3 +1,20 @@
+<<<<<<< HEAD
+version: '3.8'
+
+services:
+  app:
+    
+    build: .
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    restart: always
+
+   
+   
+   
+=======
 version: '3.8'
 
 services:
@@ -12,3 +29,4 @@ services:
 
    
    
+>>>>>>> df15d4bd34c57f3e212ddc94a87f8ef8447401b7
