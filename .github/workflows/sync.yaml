@@ -60,7 +60,23 @@ jobs:
      
     
 
-
+      - name: Copy essential files to EC2
+        uses: appleboy/scp-action@v0.1.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: |
+            Dockerfile
+            docker-compose.yml
+            package.json
+            package-lock.json
+            src/
+            dist/
+            config/
+            .env.production
+          target: ${{ env.PROJECT_DIR }}
+          strip_components: 1
      
 
       - name: SSH and deploy to EC2
