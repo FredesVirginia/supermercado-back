@@ -83,12 +83,18 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-files
+          path: build-files
+
+      - name: Verificar contenido descargado
+        run: |
+          ls -al
+          ls -al build-files || echo "No existe la carpeta build-files"
 
       - name: Move build files to root
         run: |
           mv build-files/* .
           mv build-files/.* . || true
-          
+
       - name: List files in dist/
         run: ls -al ./dist
 
