@@ -54,11 +54,20 @@ jobs:
       - name: Sync dist/ to S3
         run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete --size-only
 
-      - name: Upload dist as artifact
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-artifact
-          path: dist/
+          name: build-files
+          path: |
+            dist/
+            Dockerfile
+            docker-compose.yml
+            package.json
+            package-lock.json
+            src/
+            config/
+            .env.production
+
   deploy_to_ec2:
     needs: build_and_sync
     runs-on: ubuntu-latest
@@ -70,11 +79,11 @@ jobs:
           fetch-depth: 0 # Necesario para copiar archivos específicos
 
 
-      - name: Download DIST ARTIFITIAN
+      - name: Download BUILD ARTIFICIAS
         uses: actions/download-artifact@v4
         with:
-          name: dist-artifact
-          path: dist
+          name: build-files
+
  
       - name: List files in dist/
         run: ls -al ./dist
