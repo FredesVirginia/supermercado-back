@@ -78,7 +78,7 @@ jobs:
             src/
             dist/
             config/
-            .env.production
+        
           target: ${{ env.PROJECT_DIR }}
           strip_components: 1
      
