@@ -1,4 +1,4 @@
-name: Deploy to EC2 and S3
+name: Deploy to EC2 and S3 (TypeScript)
 
 on:
   workflow_dispatch:
@@ -6,13 +6,10 @@ on:
     branches:
       - master
 
-permissions:
-  id-token: write
-  contents: read
-
 env:
   AWS_REGION: us-east-2
   PROJECT_DIR: /home/ubuntu/supermercado-back
+  NODE_ENV: production
 
 jobs:
   build_and_sync:
@@ -29,9 +26,9 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci # Usamos ci para instalación limpia basada en lockfile
+        run: npm ci
 
-      - name: Build project
+      - name: Build TypeScript project
         run: npm run build
 
       - name: Configure AWS Credentials
@@ -41,7 +38,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Sync dist/ to S3
+      - name: Sync assets to S3
         run: aws s3 sync ./dist/ s3://${{ secrets.AWS_BUCKET_NAME }} --delete --size-only
 
   deploy_to_ec2:
@@ -51,28 +48,25 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Necesario para copiar archivos específicos
 
-      - name: Copy only essential files to EC2
+      - name: Prepare deployment bundle (TypeScript)
+        run: |
+          mkdir -p deploy
+          cp Dockerfile docker-compose.yml package*.json tsconfig.json deploy/
+          cp -r src config dist deploy/
+          if [ -f .env.production ]; then cp .env.production deploy/; fi
+          tar -czf deploy.tar.gz -C deploy .
+
+      - name: Upload bundle to EC2
         uses: appleboy/scp-action@v0.1.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: |
-            Dockerfile
-            docker-compose.yml
-            package.json
-            package-lock.json
-            src/
-            config/
-            .env.production
-            # Añade otros archivos/directorios necesarios
+          source: "deploy.tar.gz"
           target: ${{ env.PROJECT_DIR }}
-          strip_components: 1
 
-      - name: SSH and deploy to EC2
+      - name: Deploy on EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
@@ -80,9 +74,18 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ${{ env.PROJECT_DIR }}
-            docker system prune -f # Limpieza de recursos no utilizados
+            tar -xzf deploy.tar.gz
+            rm deploy.tar.gz
+            
+            # Instalar dependencias de producción
+            npm ci --only=production
+            
+            # Docker deployment
             docker-compose down --remove-orphans
             docker-compose build --no-cache --pull
             docker-compose up -d --force-recreate
-            docker image prune -f # Limpieza de imágenes no utilizadas
+            
+            # Cleanup
+            docker system prune -f
+            docker image prune -f
 
