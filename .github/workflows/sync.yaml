@@ -84,7 +84,11 @@ jobs:
         with:
           name: build-files
 
- 
+      - name: Move build files to root
+        run: |
+          mv build-files/* .
+          mv build-files/.* . || true
+          
       - name: List files in dist/
         run: ls -al ./dist
 
