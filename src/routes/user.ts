@@ -1,4 +1,4 @@
-import { Router, Request, Response } from "express";
+import { Router, Request , Response } from "express";
 import bcrypt from "bcryptjs";
 
 import jwt from "jsonwebtoken";
@@ -270,6 +270,11 @@ routerUser.post(
     }
   }
 );
+
+
+routerUser.get("/inicio" , (req : any , res : any)=>{
+    return res.json({   MESSAGE : "HOLA"})
+})
 
 
 
