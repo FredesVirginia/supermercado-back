@@ -34,10 +34,15 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: List files in project root
+      - name: CHECK IF dist EXISTS
         run: |
-            echo "LIST FILES IN DIST DIRECTORY"
+          if [ -d "./dist" ]; then
+            echo "Directory dist exists"
             ls -al ./dist
+          else
+            echo "Directory dist does not exist"
+          fi
+
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
