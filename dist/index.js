@@ -9,7 +9,7 @@ const socket_1 = require("./socket/socket");
 const descuentoServices_1 = require("./services/descuentoServices");
 const node_cron_1 = __importDefault(require("node-cron"));
 //import { sendEmailPromotions } from "./controllers/sendEmail";
-const httpServer = (0, socket_1.setupSocket)(app_1.default); // Usa setupSocket
+const httpServer = (0, socket_1.setupSocket)(app_1.default); // Usa setupSocketi
 // Syncing all the models at once.
 db_1.conn.sync({ force: false }).then(() => {
     httpServer.listen(3003, '0.0.0.0', () => {

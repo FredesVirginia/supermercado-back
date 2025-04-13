@@ -19,14 +19,18 @@ const Reporte_1 = __importDefault(require("./models/Reporte"));
 const Supermercado_1 = __importDefault(require("./models/Supermercado"));
 const Proveedor_1 = __importDefault(require("./models/Proveedor"));
 const SolicitudesSupermercados_1 = __importDefault(require("./models/SolicitudesSupermercados"));
+const isProduction = process.env.NODE_ENV === 'production';
+// console.log("LA INS PRDUCO ES " , isProduction)
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_DATABASE}`, {
     dialect: 'postgres',
-    dialectOptions: {
-        ssl: {
-            require: true, // Obliga SSL
-            rejectUnauthorized: false // Necesario para certificados autofirmados de AWS
+    dialectOptions: isProduction
+        ? {
+            ssl: {
+                require: true,
+                rejectUnauthorized: false,
+            },
         }
-    },
+        : {},
     logging: false, // set to console.log to see the raw SQL queries
     native: false, // lets Sequelize know we can use pg-native for ~30% more speed
 });
