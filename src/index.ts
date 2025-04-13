@@ -9,7 +9,7 @@ const httpServer = setupSocket(server); // Usa setupSocketi
 
 // Syncing all the models at once.
 conn.sync({ force: false }).then(() => {
-  httpServer.listen(3003, '0.0.0.0', () => {
+  httpServer.listen(3000, '0.0.0.0', () => {
     console.log("Escuchando en el puerto  8000 Harry");
   });
 });
