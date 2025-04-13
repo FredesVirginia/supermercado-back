@@ -1,5 +1,6 @@
-import dotenv from 'dotenv';
-dotenv.config();
+const path = require("path");
+
+require("dotenv").config({ path: path.resolve(__dirname, '../../.env') });
 
 interface DbConfig {
   username: string;

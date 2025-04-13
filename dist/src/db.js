@@ -5,7 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SolicitudSupermercado = exports.Categoria = exports.Supermercado = exports.Proveedor = exports.Producto = exports.User = exports.models = exports.sequelize = exports.conn = void 0;
 const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
+//require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
+require("dotenv").config({ path: path.resolve(process.cwd(), '.env') });
 const { Sequelize } = require("sequelize");
 const fs = require("fs");
 const { DB_USER, DB_PASSWORD, DB_HOST, DB_DATABASE } = process.env;
