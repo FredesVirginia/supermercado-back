@@ -1,4 +1,4 @@
-import express, {Response , Request} from 'express';
+import express, {Response , Request, NextFunction} from 'express';
 import cookieParser from 'cookie-parser';
 import bodyParser from 'body-parser';
 import morgan from 'morgan';
@@ -26,11 +26,18 @@ app.use(morgan('dev'));
 app.use('/', routes);
 
 // Error catching endware.
-app.use((err: any, _req: Request, res: Response) => {
+// app.use((err: any, _req: Request, res: Response) => {
+//   const status = err.status || 500;
+//   const message = err.message || err;
+//   console.error(err);
+//   res.status(status).send(message);
+// });
+
+app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const status = err.status || 500;
   const message = err.message || err;
   console.error(err);
-  res.status(status).send(message);
+  res.status(status).send(message); // <-- Sin "return"
 });
 
 // module.exports = app;
