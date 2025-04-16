@@ -1,10 +1,9 @@
-import { Router, Request, Response } from "express";
+import { Request, Response, Router } from "express";
+import { Op, Sequelize } from "sequelize";
+import { Categoria, Producto, Proveedor, sequelize, SolicitudSupermercado, Supermercado, User } from "../db";
 import { authMiddleware, roleMiddleware } from "../middelware/authMiddleware";
 import { UserRole } from "../types/types";
-import { getProductosConDescuento, validateRequiredStrings } from "../utils/utils";
-import { Op, Sequelize, where } from "sequelize";
-import { Categoria, Producto, Proveedor, Supermercado, User, SolicitudSupermercado } from "../db";
-import { CategoriaAttributes } from "../models/Categoria";
+import { validateRequiredStrings } from "../utils/utils";
 
 const routerSupermercado = Router();
 
@@ -169,39 +168,92 @@ routerSupermercado.post(
   }
 );
 
-routerSupermercado.get(
-  "/category",
-  authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
-  async (req: any, res: any) => {
-    try {
-      const allCategory = await Categoria.findAll({
-        // WHERE name = 'Juan'
-        attributes: ["name"], // Seleccionar solo estos campos
-      });
+routerSupermercado.get("/category", async (req: Request, res: Response) => {
+  try {
+    const { category } = req.query;
+    console.log("EL PARAME S ", category);
+    const allCategory = await Categoria.findAll({
+      // WHERE name = 'Juan'
+      attributes: ["name"], // Seleccionar solo estos campos
+    });
 
-      res.status(200).send(allCategory);
-    } catch (error) {
-      console.log("Error Category", error);
-      res.status(500).json({ message: error });
-    }
+    res.status(200).send(allCategory);
+  } catch (error) {
+    console.log("Error Category", error);
+    res.status(500).json({ message: error });
   }
-);
+});
+
+routerSupermercado.get("/product/category", async (req: Request, res: Response) => {
+  try {
+    const { category } = req.query;
+
+    if (typeof category !== "string" || !category.trim()) {
+      res.status(400).json({ error: "El parámetro 'category' debe ser un string válido" });
+      return;
+    }
+
+    const typeCategory = await Categoria.findOne({
+      where: {
+        name: category,
+      },
+    });
+
+    const allProductosByCategory = await Producto.findAll({
+      include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
+      where: {
+        categoria_id: typeCategory?.id,
+      },
+      attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento"],
+      group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
+    });
+
+    const productosAgrupados = {
+      productos5dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 30),
+      productos10dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 20),
+      productos15dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 10),
+    };
+
+    const productosAgrupados2 = [
+      { cantidad : productosAgrupados.productos5dias.length ,
+        productos : productosAgrupados.productos5dias
+      },
+      { cantidad : productosAgrupados.productos10dias.length ,
+        productos : productosAgrupados.productos10dias
+      },
+      { cantidad : productosAgrupados.productos15dias.length ,
+        productos : productosAgrupados.productos15dias
+      }
+    ]
+
+    res.status(200).json( productosAgrupados2 );
+  } catch (error) {
+    console.log("EEROE ", error);
+    res.status(500).json({ message: "Error del servidor" });
+  }
+});
 
 routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
   try {
     const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = await Promise.all([
       Producto.findAll({
+       
         include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 10 } },
+        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
+        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id" ,],
       }),
       Producto.findAll({
         include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 20 } },
+        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
+        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
       }),
       Producto.findAll({
         include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 30 } },
+        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
+        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
       }),
     ]);
 
@@ -227,38 +279,6 @@ routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
   }
 });
 
-// routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
-//   try {
-
-//     const conteo = await Categoria.findAll({
-//       attributes: {
-//         include: [[Sequelize.fn("COUNT", "productos.id"), "cantidad"]],
-//       },
-//       include: [
-//         {
-//           model: Producto,
-//           as: "productos",
-//           attributes: [],
-//         },
-//       ],
-//       group: ["Categoria.id"],
-//       raw: true,
-//     });
-
-//     // Formato de salida
-//     const totalProductos = conteo.map((categoria: CategoriaAttributes) => ({
-//       cantidad: categoria.cantidad,
-//       categoria: categoria.name,
-//     }));
-
-//     const totalProductosMenorStock = totalProductos.filter((q: { cantidad: number }) => q.cantidad < 10);
-
-//     res.json(totalProductosMenorStock);
-//   } catch (error) {
-//     console.error("Error:", error);
-//     res.status(500).json({ mensaje: "Error al obtener datos" });
-//   }
-// });
 
 routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
   try {
