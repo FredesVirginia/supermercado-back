@@ -477,7 +477,7 @@ routerSupermercado.put("/proveedor/:id", authMiddleware,roleMiddleware([UserRole
       res.status(200).json({ message: "Se Actualizo el proveedor" , proveedor });
     } catch (error) {
       console.log("EL ERROR FUE", error);
-      res.status(500).json({ message: "Error del servidor" });
+      res.status(500).json({ message: "Error del servidor" , error});
     }
   }
 );
