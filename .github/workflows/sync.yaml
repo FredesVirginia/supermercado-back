@@ -32,7 +32,16 @@ jobs:
           username: ec2-user # por ejemplo ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ec2-user/supermercado-back
-            git pull origin master       
-            docker-compose down         
-            docker-compose up -d --build 
+           cd /home/ec2-user/supermercado-back
+            git pull origin master
+            
+            echo "🧹 Deteniendo servicios..."
+            docker-compose down
+
+            echo "🧼 Limpiando contenedores, imágenes y volúmenes no usados..."
+            docker container prune -f
+            docker image prune -a -f
+            docker volume prune -f
+
+            echo "🚀 Levantando el stack..."
+            docker-compose up -d --build
