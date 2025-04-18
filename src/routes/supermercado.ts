@@ -168,8 +168,8 @@ routerSupermercado.get("/category", async (req: Request, res: Response) => {
     const { category } = req.query;
     console.log("EL PARAME S ", category);
     const allCategory = await Categoria.findAll({
-      // WHERE name = 'Juan'
-      attributes: ["name"], // Seleccionar solo estos campos
+     
+      attributes: ["name"], 
     });
 
     res.status(200).send(allCategory);
