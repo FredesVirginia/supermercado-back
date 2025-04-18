@@ -420,7 +420,7 @@ routerSupermercado.get("/lista/solicitud/supermercados",authMiddleware,roleMiddl
 routerSupermercado.get("/proveedores",authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     try {
-      console.log("aqui")
+      console.log("aquiwww")
       const supermercadoId = req.user.supermercado_id;
 
       if (!supermercadoId) {
