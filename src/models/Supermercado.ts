@@ -16,7 +16,7 @@ interface SupermercadoAttributes {
 
 interface SupermercadoCreationAttributes extends Optional<SupermercadoAttributes, 'id'> {}
 
-class Supermercado extends Model<SupermercadoAttributes, SupermercadoCreationAttributes> 
+export class Supermercado extends Model<SupermercadoAttributes, SupermercadoCreationAttributes> 
   implements SupermercadoAttributes {
   // Declaración explícita de las propiedades
   public id!: string;
@@ -75,7 +75,7 @@ const initSupermercado = (sequelize: Sequelize): typeof Supermercado => {
 
   return Supermercado;
 };
-export { Supermercado} ;
+
 export { SupermercadoAttributes, SupermercadoCreationAttributes, initSupermercado };
 
 export default initSupermercado 
