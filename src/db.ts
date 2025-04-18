@@ -37,27 +37,27 @@ const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}
 
 const basename = path.basename(__filename);
 
-const modelDefiners: any[] = [];
+// const modelDefiners: any[] = [];
 
-// Leemos todos los archivos de la carpeta Models, los requerimos y agregamos al arreglo modelDefiners
-fs.readdirSync(path.join(__dirname, "/models"))
-  .filter((file: string) => file.indexOf(".") !== 0 && file !== basename && file.slice(-3) === ".ts")
-  .forEach((file: any) => {
-    modelDefiners.push(require(path.join(__dirname, "/models", file)));
-  });
+// // Leemos todos los archivos de la carpeta Models, los requerimos y agregamos al arreglo modelDefiners
+// fs.readdirSync(path.join(__dirname, "/models"))
+//   .filter((file: string) => file.indexOf(".") !== 0 && file !== basename && file.slice(-3) === ".ts")
+//   .forEach((file: any) => {
+//     modelDefiners.push(require(path.join(__dirname, "/models", file)));
+//   });
 
-// Injectamos la conexion (sequelize) a todos los modelos
-modelDefiners.forEach((model) => {
-  if (model.default) {
-    model.default(sequelize); // Para modelos exportados con `export default`
-  } else {
-    model(sequelize); // Para modelos exportados con `module.exports`
-  }
-});
-// Capitalizamos los nombres de los modelos ie: product => Product
-let entries = Object.entries(sequelize.models);
-let capsEntries = entries.map((entry) => [entry[0][0].toUpperCase() + entry[0].slice(1), entry[1]]);
-sequelize.models = Object.fromEntries(capsEntries);
+// // Injectamos la conexion (sequelize) a todos los modelos
+// modelDefiners.forEach((model) => {
+//   if (model.default) {
+//     model.default(sequelize); // Para modelos exportados con `export default`
+//   } else {
+//     model(sequelize); // Para modelos exportados con `module.exports`
+//   }
+// });
+// // Capitalizamos los nombres de los modelos ie: product => Product
+// let entries = Object.entries(sequelize.models);
+// let capsEntries = entries.map((entry) => [entry[0][0].toUpperCase() + entry[0].slice(1), entry[1]]);
+// sequelize.models = Object.fromEntries(capsEntries);
 
 
 const User = initUser(sequelize);
@@ -70,6 +70,7 @@ const Promocion = initPromocion(sequelize);
 const Reporte = initReporte(sequelize);
 const Proveedor = initProveedor(sequelize)
 const SolicitudSupermercado = initSolicitudSupermercado(sequelize)
+
 const models = sequelize.models; 
 // 📌 Un Supermercado pertenece a un Usuario (Administrador)
 Supermercado.belongsTo(User, { foreignKey: "admin_id", as: "admin" });

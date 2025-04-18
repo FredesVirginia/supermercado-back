@@ -68,12 +68,6 @@ const initProveedor = (sequelize) => {
         sequelize,
         modelName: 'Proveedor',
         // Opciones adicionales:
-        paranoid: true, // Para soft delete
-        indexes: [
-            { fields: ['name'] },
-            { fields: ['cuit'] },
-            { fields: ['email'] }
-        ]
     });
     return Proveedor;
 };

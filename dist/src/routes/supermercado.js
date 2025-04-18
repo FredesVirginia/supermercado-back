@@ -10,11 +10,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
+const sequelize_1 = require("sequelize");
+const db_1 = require("../db");
 const authMiddleware_1 = require("../middelware/authMiddleware");
 const types_1 = require("../types/types");
 const utils_1 = require("../utils/utils");
-const sequelize_1 = require("sequelize");
-const db_1 = require("../db");
 const routerSupermercado = (0, express_1.Router)();
 routerSupermercado.post("/add", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const requiredFields = ["name", "address", "provincia", "departamento", "localidad"];
@@ -92,6 +92,7 @@ routerSupermercado.post("/add/proveedor", authMiddleware_1.authMiddleware, (0, a
     var _a, _b, _c;
     const requiredField = ["name", "razonSocial", "cuit", "direccion", "phone", "email"];
     const { name, razonSocial, cuit, direccion, phone, email } = req.body;
+    console.log("DATOOOOOOOOOOOOOOS", req.user.supermercado_id);
     try {
         if ((0, utils_1.validateRequiredStrings)(req.body, requiredField)) {
             const proveedor = yield db_1.Proveedor.create({
@@ -102,6 +103,7 @@ routerSupermercado.post("/add/proveedor", authMiddleware_1.authMiddleware, (0, a
                 phone,
                 email,
             });
+            yield proveedor.addSupermercado(req.user.supermercado_id);
             return res.status(200).json({ data: proveedor });
         }
         return res.status(400).json({ message: "Todos los campos son obligatorios" });
@@ -149,8 +151,10 @@ routerSupermercado.post("/add/category", authMiddleware_1.authMiddleware, (0, au
         res.status(500).json({ error });
     }
 }));
-routerSupermercado.get("/category", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+routerSupermercado.get("/category", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const { category } = req.query;
+        console.log("EL PARAME S ", category);
         const allCategory = yield db_1.Categoria.findAll({
             // WHERE name = 'Juan'
             attributes: ["name"], // Seleccionar solo estos campos
@@ -162,20 +166,63 @@ routerSupermercado.get("/category", authMiddleware_1.authMiddleware, (0, authMid
         res.status(500).json({ message: error });
     }
 }));
+routerSupermercado.get("/product/category", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { category } = req.query;
+        if (typeof category !== "string" || !category.trim()) {
+            res.status(400).json({ error: "El parámetro 'category' debe ser un string válido" });
+            return;
+        }
+        const typeCategory = yield db_1.Categoria.findOne({
+            where: {
+                name: category,
+            },
+        });
+        const allProductosByCategory = yield db_1.Producto.findAll({
+            include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
+            where: {
+                categoria_id: typeCategory === null || typeCategory === void 0 ? void 0 : typeCategory.id,
+            },
+            attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento"],
+            group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+        });
+        const productosAgrupados = {
+            productos5dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 30),
+            productos10dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 20),
+            productos15dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 10),
+        };
+        const productosAgrupados2 = [
+            { cantidad: productosAgrupados.productos5dias.length, productos: productosAgrupados.productos5dias },
+            { cantidad: productosAgrupados.productos10dias.length, productos: productosAgrupados.productos10dias },
+            { cantidad: productosAgrupados.productos15dias.length, productos: productosAgrupados.productos15dias },
+        ];
+        res.status(200).json(productosAgrupados2);
+    }
+    catch (error) {
+        console.log("EEROE ", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+}));
 routerSupermercado.get("/promociones", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = yield Promise.all([
             db_1.Producto.findAll({
                 include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
                 where: { descuento: { [sequelize_1.Op.eq]: 10 } },
+                attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+                group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
             }),
             db_1.Producto.findAll({
                 include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
                 where: { descuento: { [sequelize_1.Op.eq]: 20 } },
+                attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+                group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
             }),
             db_1.Producto.findAll({
                 include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
                 where: { descuento: { [sequelize_1.Op.eq]: 30 } },
+                attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+                group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
             }),
         ]);
         const productoAgrupados = [
@@ -199,34 +246,6 @@ routerSupermercado.get("/promociones", (req, res) => __awaiter(void 0, void 0, v
         res.status(500).json({ message: "Error interno en el servidor" }); // Corregido "Erro" → "Error"
     }
 }));
-// routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
-//   try {
-//     const conteo = await Categoria.findAll({
-//       attributes: {
-//         include: [[Sequelize.fn("COUNT", "productos.id"), "cantidad"]],
-//       },
-//       include: [
-//         {
-//           model: Producto,
-//           as: "productos",
-//           attributes: [],
-//         },
-//       ],
-//       group: ["Categoria.id"],
-//       raw: true,
-//     });
-//     // Formato de salida
-//     const totalProductos = conteo.map((categoria: CategoriaAttributes) => ({
-//       cantidad: categoria.cantidad,
-//       categoria: categoria.name,
-//     }));
-//     const totalProductosMenorStock = totalProductos.filter((q: { cantidad: number }) => q.cantidad < 10);
-//     res.json(totalProductosMenorStock);
-//   } catch (error) {
-//     console.error("Error:", error);
-//     res.status(500).json({ mensaje: "Error al obtener datos" });
-//   }
-// });
 routerSupermercado.get("/productos/stock", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const conteo = yield db_1.Categoria.findAll({
@@ -353,6 +372,74 @@ routerSupermercado.get("/lista/solicitud/supermercados", authMiddleware_1.authMi
     }
     catch (error) {
         res.status(500).json({ message: error });
+    }
+}));
+routerSupermercado.get("/proveedores", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const supermercadoId = req.user.supermercado_id;
+        if (!supermercadoId) {
+            return res.status(400).json({ message: "ID de supermercado no disponible en el usuario autenticado." });
+        }
+        const supermercado = yield db_1.Supermercado.findByPk(supermercadoId, {
+            include: {
+                model: db_1.Proveedor,
+                as: "proveedores",
+                through: { attributes: [] },
+            },
+        });
+        if (!supermercado) {
+            return res.status(404).json({ message: "Supermercado no encontrado." });
+        }
+        res.status(200).json(supermercado);
+    }
+    catch (error) {
+        console.error("Error al obtener proveedores:", error);
+        res.status(500).json({ message: "Error del Servidor" });
+    }
+}));
+routerSupermercado.put("/proveedor/:id", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    const { name, razonSocial, cuit, dirreccion, phone, email } = req.body;
+    const requiredField = ["name", "razonSocial", "cuit", "direccion", "phone", "email"];
+    try {
+        if (!(0, utils_1.validateRequiredStrings)(req.body, requiredField)) {
+            res.status(400).json({ message: "TODOS LOS CAMPOS SON OBLIGATORIOS" });
+            return;
+        }
+        const proveedor = yield db_1.Proveedor.findByPk(id);
+        if (!proveedor) {
+            res.status(404).json({ message: "Proveedor no encontrado" });
+            return;
+        }
+        yield proveedor.update({
+            name,
+            razonSocial,
+            cuit,
+            direccion: dirreccion,
+            phone,
+            email
+        });
+        res.status(200).json({ message: "Se Actualizo el proveedor", proveedor });
+    }
+    catch (error) {
+        console.log("EL ERROR FUE", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+}));
+routerSupermercado.delete("/proveedor/:id", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { id } = req.params;
+    try {
+        const proveedor = yield db_1.Proveedor.findByPk(id);
+        if (!proveedor) {
+            res.status(404).json({ message: "No se encontro el Proveedor" });
+            return;
+        }
+        yield proveedor.destroy();
+        res.status(200).json({ message: "OK" });
+    }
+    catch (error) {
+        console.log("EL ERROR FUE", error);
+        res.status(500).json({ message: "Error del servidor" });
     }
 }));
 exports.default = routerSupermercado;

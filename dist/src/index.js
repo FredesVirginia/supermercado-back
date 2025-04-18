@@ -12,7 +12,7 @@ const node_cron_1 = __importDefault(require("node-cron"));
 const httpServer = (0, socket_1.setupSocket)(app_1.default); // Usa setupSocketi
 // Syncing all the models at once.
 db_1.conn.sync({ force: false }).then(() => {
-    httpServer.listen(3003, '0.0.0.0', () => {
+    httpServer.listen(3000, '0.0.0.0', () => {
         console.log("Escuchando en el puerto  8000 Harry");
     });
 });

@@ -1,11 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initSupermercado = void 0;
+exports.initSupermercado = exports.Supermercado = void 0;
 const sequelize_1 = require("sequelize");
 class Supermercado extends sequelize_1.Model {
 }
+exports.Supermercado = exports.Supermercado;
 const initSupermercado = (sequelize) => {
-    Supermercado.init({
+    exports.Supermercado.init({
         id: {
             type: sequelize_1.DataTypes.UUID,
             defaultValue: sequelize_1.DataTypes.UUIDV4,
@@ -41,7 +42,7 @@ const initSupermercado = (sequelize) => {
         sequelize,
         modelName: "Supermercado",
     });
-    return Supermercado;
+    return exports.Supermercado;
 };
 exports.initSupermercado = initSupermercado;
 exports.default = initSupermercado;

@@ -1,5 +1,5 @@
-import { DataTypes, Sequelize, Model, Optional } from 'sequelize';
-
+import { DataTypes, Sequelize, Model, Optional, BelongsToManyAddAssociationMixin, BelongsToManyGetAssociationsMixin, BelongsToManyCountAssociationsMixin, BelongsToManyHasAssociationMixin, BelongsToManyRemoveAssociationMixin } from 'sequelize';
+import{Supermercado} from "./Supermercado"
 // Interface para los atributos del Proveedor
 interface ProveedorAttributes {
   id: string;
@@ -9,6 +9,7 @@ interface ProveedorAttributes {
   direccion: string;
   phone: string;
   email: string;
+  supermercado_admin_id? : string;
 }
 
 // Interface para los atributos de creación
@@ -29,10 +30,17 @@ class Proveedor extends Model<ProveedorAttributes, ProveedorCreationAttributes>
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
+  public addSupermercado!: BelongsToManyAddAssociationMixin<Supermercado, string>;
+  public getSupermercado!: BelongsToManyGetAssociationsMixin<Supermercado>;
+  public countSupermercado!: BelongsToManyCountAssociationsMixin;
+  public hasSupermercado!: BelongsToManyHasAssociationMixin<Supermercado, string>;
+  public removeSupermercado!: BelongsToManyRemoveAssociationMixin<Supermercado, string>;
   // Método para formatear CUIT
   public getCuitFormateado(): string {
     return this.cuit.replace(/(\d{2})(\d{8})(\d)/, '$1-$2-$3');
   }
+
+  
 }
 
 const initProveedor = (sequelize: Sequelize): typeof Proveedor => {
@@ -97,12 +105,7 @@ const initProveedor = (sequelize: Sequelize): typeof Proveedor => {
       sequelize,
       modelName: 'Proveedor',
       // Opciones adicionales:
-      paranoid: true, // Para soft delete
-      indexes: [
-        { fields: ['name'] },
-        { fields: ['cuit'] },
-        { fields: ['email'] }
-      ]
+     
     }
   );
 

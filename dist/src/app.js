@@ -25,11 +25,17 @@ app.use((0, morgan_1.default)('dev'));
 // });
 app.use('/', index_1.default);
 // Error catching endware.
-app.use((err, _req, res) => {
+// app.use((err: any, _req: Request, res: Response) => {
+//   const status = err.status || 500;
+//   const message = err.message || err;
+//   console.error(err);
+//   res.status(status).send(message);
+// });
+app.use((err, _req, res, _next) => {
     const status = err.status || 500;
     const message = err.message || err;
     console.error(err);
-    res.status(status).send(message);
+    res.status(status).send(message); // <-- Sin "return"
 });
 // module.exports = app;
 exports.default = app;

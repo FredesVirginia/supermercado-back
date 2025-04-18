@@ -1,6 +1,6 @@
 import { Request, Response, Router } from "express";
 import { Op, Sequelize } from "sequelize";
-import { Categoria, Producto, Proveedor, sequelize, SolicitudSupermercado, Supermercado, User } from "../db";
+import { Categoria, Producto, Proveedor, SolicitudSupermercado, Supermercado, User } from "../db";
 import { authMiddleware, roleMiddleware } from "../middelware/authMiddleware";
 import { UserRole } from "../types/types";
 import { validateRequiredStrings } from "../utils/utils";
@@ -48,10 +48,7 @@ routerSupermercado.post("/add", authMiddleware, roleMiddleware([UserRole.SUPER_A
   }
 });
 
-routerSupermercado.post(
-  "/add/product",
-  authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+routerSupermercado.post("/add/product",authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     const requiredField = [
       "marca",
@@ -91,13 +88,11 @@ routerSupermercado.post(
   }
 );
 
-routerSupermercado.post(
-  "/add/proveedor",
-  authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+routerSupermercado.post("/add/proveedor",authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     const requiredField = ["name", "razonSocial", "cuit", "direccion", "phone", "email"];
     const { name, razonSocial, cuit, direccion, phone, email } = req.body;
+    console.log("DATOOOOOOOOOOOOOOS", req.user.supermercado_id);
     try {
       if (validateRequiredStrings(req.body, requiredField)) {
         const proveedor = await Proveedor.create({
@@ -108,6 +103,9 @@ routerSupermercado.post(
           phone,
           email,
         });
+
+        await proveedor.addSupermercado(req.user.supermercado_id);
+
         return res.status(200).json({ data: proveedor });
       }
       return res.status(400).json({ message: "Todos los campos son obligatorios" });
@@ -127,10 +125,7 @@ routerSupermercado.post(
   }
 );
 
-routerSupermercado.post(
-  "/add/category",
-  authMiddleware,
-  roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+routerSupermercado.post("/add/category", authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     const categoryNames: string[] = req.body;
     try {
@@ -205,7 +200,7 @@ routerSupermercado.get("/product/category", async (req: Request, res: Response) 
         categoria_id: typeCategory?.id,
       },
       attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento"],
-      group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
+      group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
     });
 
     const productosAgrupados = {
@@ -215,18 +210,12 @@ routerSupermercado.get("/product/category", async (req: Request, res: Response) 
     };
 
     const productosAgrupados2 = [
-      { cantidad : productosAgrupados.productos5dias.length ,
-        productos : productosAgrupados.productos5dias
-      },
-      { cantidad : productosAgrupados.productos10dias.length ,
-        productos : productosAgrupados.productos10dias
-      },
-      { cantidad : productosAgrupados.productos15dias.length ,
-        productos : productosAgrupados.productos15dias
-      }
-    ]
+      { cantidad: productosAgrupados.productos5dias.length, productos: productosAgrupados.productos5dias },
+      { cantidad: productosAgrupados.productos10dias.length, productos: productosAgrupados.productos10dias },
+      { cantidad: productosAgrupados.productos15dias.length, productos: productosAgrupados.productos15dias },
+    ];
 
-    res.status(200).json( productosAgrupados2 );
+    res.status(200).json(productosAgrupados2);
   } catch (error) {
     console.log("EEROE ", error);
     res.status(500).json({ message: "Error del servidor" });
@@ -237,23 +226,22 @@ routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
   try {
     const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = await Promise.all([
       Producto.findAll({
-       
         include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 10 } },
-        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
-        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id" ,],
+        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
       }),
       Producto.findAll({
         include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 20 } },
-        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
-        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
+        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
       }),
       Producto.findAll({
         include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 30 } },
-        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
-        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento" , "categoria.id"],
+        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
       }),
     ]);
 
@@ -278,7 +266,6 @@ routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error interno en el servidor" }); // Corregido "Erro" → "Error"
   }
 });
-
 
 routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
   try {
@@ -419,16 +406,99 @@ routerSupermercado.post("/solicitud", async (req: Request, res: Response) => {
   }
 });
 
-routerSupermercado.get(
-  "/lista/solicitud/supermercados",
-  authMiddleware,
-  roleMiddleware([UserRole.SUPER_ADMIN]),
+routerSupermercado.get("/lista/solicitud/supermercados",authMiddleware,roleMiddleware([UserRole.SUPER_ADMIN]),
   async (req: Request, res: Response) => {
     try {
       const listSolicitudeSupermarket = await SolicitudSupermercado.findAll();
       res.status(200).json({ data: listSolicitudeSupermarket });
     } catch (error) {
       res.status(500).json({ message: error });
+    }
+  }
+);
+
+routerSupermercado.get("/proveedores",authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+  async (req: any, res: any) => {
+    try {
+      const supermercadoId = req.user.supermercado_id;
+
+      if (!supermercadoId) {
+        return res.status(400).json({ message: "ID de supermercado no disponible en el usuario autenticado." });
+      }
+
+      const supermercado = await Supermercado.findByPk(supermercadoId, {
+        include: {
+          model: Proveedor,
+          as: "proveedores",
+          through: { attributes: [] },
+        },
+      });
+
+      if (!supermercado) {
+        return res.status(404).json({ message: "Supermercado no encontrado." });
+      }
+
+      res.status(200).json(supermercado);
+    } catch (error: any) {
+      console.error("Error al obtener proveedores:", error);
+      res.status(500).json({ message: "Error del Servidor" });
+    }
+  }
+);
+
+routerSupermercado.put("/proveedor/:id", authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+  async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+    const { name, razonSocial, cuit, dirreccion, phone, email } = req.body;
+    const requiredField = ["name", "razonSocial", "cuit", "direccion", "phone", "email"];
+
+    try {
+      if (!validateRequiredStrings(req.body, requiredField)) {
+        res.status(400).json({ message: "TODOS LOS CAMPOS SON OBLIGATORIOS" });
+        return;
+      }
+
+     const proveedor = await Proveedor.findByPk(id);
+     if(!proveedor){
+      res.status(404).json({message : "Proveedor no encontrado"});
+      return;
+     }
+
+     await proveedor.update({
+      name , 
+      razonSocial,
+      cuit,
+       direccion : dirreccion,
+      phone , 
+      email
+
+     })
+
+      res.status(200).json({ message: "Se Actualizo el proveedor" , proveedor });
+    } catch (error) {
+      console.log("EL ERROR FUE", error);
+      res.status(500).json({ message: "Error del servidor" });
+    }
+  }
+);
+
+routerSupermercado.delete("/proveedor/:id", authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+  async (req: Request, res: Response): Promise<void> => {
+    const { id } = req.params;
+   
+
+    try {
+      const proveedor = await Proveedor.findByPk(id);
+      if(!proveedor){
+        res.status(404).json({message : "No se encontro el Proveedor"});
+        return
+      }
+
+     await proveedor.destroy();
+      res.status(200).json({message : "OK"})
+    } catch (error) {
+      console.log("EL ERROR FUE", error);
+      res.status(500).json({ message: "Error del servidor" });
     }
   }
 );
