@@ -4,9 +4,9 @@ exports.initSupermercado = exports.Supermercado = void 0;
 const sequelize_1 = require("sequelize");
 class Supermercado extends sequelize_1.Model {
 }
-exports.Supermercado = exports.Supermercado;
+exports.Supermercado = Supermercado;
 const initSupermercado = (sequelize) => {
-    exports.Supermercado.init({
+    Supermercado.init({
         id: {
             type: sequelize_1.DataTypes.UUID,
             defaultValue: sequelize_1.DataTypes.UUIDV4,
@@ -42,7 +42,7 @@ const initSupermercado = (sequelize) => {
         sequelize,
         modelName: "Supermercado",
     });
-    return exports.Supermercado;
+    return Supermercado;
 };
 exports.initSupermercado = initSupermercado;
 exports.default = initSupermercado;

@@ -376,6 +376,7 @@ routerSupermercado.get("/lista/solicitud/supermercados", authMiddleware_1.authMi
 }));
 routerSupermercado.get("/proveedores", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        console.log("aquiwww");
         const supermercadoId = req.user.supermercado_id;
         if (!supermercadoId) {
             return res.status(400).json({ message: "ID de supermercado no disponible en el usuario autenticado." });
@@ -423,7 +424,7 @@ routerSupermercado.put("/proveedor/:id", authMiddleware_1.authMiddleware, (0, au
     }
     catch (error) {
         console.log("EL ERROR FUE", error);
-        res.status(500).json({ message: "Error del servidor" });
+        res.status(500).json({ message: "Error del servidor", error });
     }
 }));
 routerSupermercado.delete("/proveedor/:id", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
