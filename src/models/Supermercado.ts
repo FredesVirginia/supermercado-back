@@ -75,6 +75,7 @@ const initSupermercado = (sequelize: Sequelize): typeof Supermercado => {
 
   return Supermercado;
 };
-
+export { Supermercado} ;
 export { SupermercadoAttributes, SupermercadoCreationAttributes, initSupermercado };
+
 export default initSupermercado 
