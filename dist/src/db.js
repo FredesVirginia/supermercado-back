@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SolicitudSupermercado = exports.Categoria = exports.Supermercado = exports.Proveedor = exports.Producto = exports.User = exports.models = exports.sequelize = exports.conn = void 0;
+exports.Marca = exports.SolicitudSupermercado = exports.Categoria = exports.Supermercado = exports.Proveedor = exports.Producto = exports.User = exports.models = exports.sequelize = exports.conn = void 0;
 const path = require("path");
 //require("dotenv").config({ path: path.resolve(__dirname, '../.env') });
 require("dotenv").config({ path: path.resolve(process.cwd(), '.env') });
@@ -20,6 +20,7 @@ const Reporte_1 = __importDefault(require("./models/Reporte"));
 const Supermercado_1 = __importDefault(require("./models/Supermercado"));
 const Proveedor_1 = __importDefault(require("./models/Proveedor"));
 const SolicitudesSupermercados_1 = __importDefault(require("./models/SolicitudesSupermercados"));
+const Marca_1 = __importDefault(require("./models/Marca"));
 const isProduction = process.env.NODE_ENV === 'production';
 // console.log("LA INS PRDUCO ES " , isProduction)
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_DATABASE}`, {
@@ -72,6 +73,8 @@ const Proveedor = (0, Proveedor_1.default)(sequelize);
 exports.Proveedor = Proveedor;
 const SolicitudSupermercado = (0, SolicitudesSupermercados_1.default)(sequelize);
 exports.SolicitudSupermercado = SolicitudSupermercado;
+const Marca = (0, Marca_1.default)(sequelize);
+exports.Marca = Marca;
 const models = sequelize.models;
 exports.models = models;
 // 📌 Un Supermercado pertenece a un Usuario (Administrador)
@@ -80,6 +83,9 @@ User.hasMany(Supermercado, { foreignKey: "admin_id", as: "supermercados" });
 // 📌 Un Producto pertenece a una Categoría
 Producto.belongsTo(Categoria, { foreignKey: "categoria_id", as: "categoria" });
 Categoria.hasMany(Producto, { foreignKey: "categoria_id", as: "productos" });
+// 📌 Un Producto tiene a una Marca
+Producto.belongsTo(Marca, { foreignKey: "marca_id", as: "marca" });
+Marca.hasMany(Producto, { foreignKey: "marca_id", as: "productos" });
 // UN producto tiene un proveedor y un proveedor tiene muchos productos
 Producto.belongsTo(Proveedor, { foreignKey: "proveedor_id", as: "proveedor" });
 Proveedor.hasMany(Producto, { foreignKey: "proveedor_id", as: "productos" });

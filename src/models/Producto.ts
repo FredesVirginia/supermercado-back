@@ -4,7 +4,6 @@ import { DataTypes, Sequelize, Model, Optional } from "sequelize";
 // Interface para los atributos del Producto
 interface ProductoAttributes {
   id: string;
-  marca: string;
   codigobarras: string;
   fechavencimiento: Date;
   descuento: number;
@@ -12,7 +11,8 @@ interface ProductoAttributes {
   preciodescuento: number;
   categoria_id? : string;
   supermercado_id? : string;
-  proveedor_id ? : string
+  proveedor_id ? : string;
+  marca_id? : string 
 }
 
 // Interface para los atributos de creación (opcional, permite omitir el id)
@@ -22,7 +22,7 @@ class Producto extends Model<ProductoAttributes, ProductoCreationAttributes>
   implements ProductoAttributes {
   // Declaración explícita de las propiedades
   public id!: string;
-  public marca!: string;
+
   public codigobarras!: string;
   public fechavencimiento!: Date;
   public descuento!: number;
@@ -45,10 +45,7 @@ const initProducto = (sequelize: Sequelize): typeof Producto => {
         allowNull: false,
         unique: true,
       },
-      marca: {
-        type: DataTypes.TEXT,
-        allowNull: false,
-      },
+     
       codigobarras: {
         type: DataTypes.TEXT,
         allowNull: false,

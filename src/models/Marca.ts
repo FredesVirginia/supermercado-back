@@ -2,17 +2,17 @@
 import { DataTypes, Sequelize, Model, Optional } from "sequelize";
 
 
-interface CategoriaAttributes {
+interface MarcaAttributes {
   id: string;
   name: string;
   [key: string]: any; 
 }
 
 
-interface CategoriaCreationAttributes extends Optional<CategoriaAttributes, 'id'> {}
+interface MarcaCreationAttributes extends Optional<MarcaAttributes, 'id'> {}
 
-class Categoria extends Model<CategoriaAttributes, CategoriaCreationAttributes> 
-  implements CategoriaAttributes {
+class Marca extends Model<MarcaAttributes, MarcaCreationAttributes> 
+  implements MarcaAttributes {
 
   public id!: string;
   public name!: string;
@@ -28,8 +28,8 @@ class Categoria extends Model<CategoriaAttributes, CategoriaCreationAttributes>
   }
 }
 
-const initCategoria = (sequelize: Sequelize): typeof Categoria => {
-  Categoria.init(
+const initMarca = (sequelize: Sequelize): typeof Marca => {
+  Marca.init(
     {
       id: {
         type: DataTypes.UUID,
@@ -49,14 +49,14 @@ const initCategoria = (sequelize: Sequelize): typeof Categoria => {
     },
     {
       sequelize,
-      modelName: "Categoria",
+      modelName: "Marca",
      
     }
   );
 
-  return Categoria;
+  return Marca;
 };
 
 
-export { CategoriaAttributes, CategoriaCreationAttributes, initCategoria };
-export default initCategoria
+export { MarcaAttributes, MarcaCreationAttributes, initMarca };
+export default initMarca

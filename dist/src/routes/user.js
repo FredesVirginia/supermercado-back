@@ -65,23 +65,18 @@ routerUser.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, functi
                 },
             ],
         });
-        if (!existingUser) {
-            res.status(400).json({ message: "Usuario no registrado" });
-            return;
-        }
+        if (!existingUser)
+            return res.status(400).json({ message: "Usuario no registrado" });
         //const isMatch = await bcrypt.compare(password, existingUser.get('password'));
         const isMatch = yield bcryptjs_1.default.compare(password, existingUser.password);
-        if (!isMatch) {
-            res.status(400).json({ message: "Contraseña incorrecta" });
-            return;
-        }
+        if (!isMatch)
+            return res.status(400).json({ message: "Contraseña incorrecta" });
         // Si es SUPER_ADMIN, generamos el token y respondemos inmediatamente
         if (existingUser.getDataValue("role") === types_1.UserRole.SUPER_ADMIN) {
             const token = jsonwebtoken_1.default.sign({ id: existingUser.getDataValue("id"), role: existingUser.getDataValue("role") }, process.env.JWT_SECRET, { expiresIn: "1h" });
             const userData = existingUser.get({ plain: true });
             delete userData.password;
-            res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
-            return;
+            return res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
         }
         // Si no es SUPER_ADMIN, verificamos que tenga un supermercado asignado
         const supermercado = yield db_1.Supermercado.findOne({
@@ -96,8 +91,7 @@ routerUser.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, functi
             ],
         });
         if (!supermercado) {
-            res.status(400).json({ message: "El usuario no tiene un supermercado asignado" }); // ✅ SE USA RETURN
-            return;
+            return res.status(400).json({ message: "El usuario no tiene un supermercado asignado" }); // ✅ SE USA RETURN
         }
         // Si el usuario tiene supermercado, generamos el token y respondemos
         const token = jsonwebtoken_1.default.sign({
@@ -107,13 +101,11 @@ routerUser.post("/login", (req, res) => __awaiter(void 0, void 0, void 0, functi
         }, process.env.JWT_SECRET, { expiresIn: "1h" });
         const userData = existingUser.get({ plain: true });
         delete userData.password;
-        res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
-        return;
+        return res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
     }
     catch (error) {
         console.log("Error login", error);
-        res.status(500).json({ message: "Error INICIO SESION", error }); // ✅ SE USA RETURN
-        return;
+        return res.status(500).json({ message: "Error INICIO SESION", error }); // ✅ SE USA RETURN
     }
 }));
 routerUser.post("/addSupermarket", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -238,7 +230,4 @@ routerUser.post("/solicitudes/supermercados", authMiddleware_1.authMiddleware, (
         res.status(500).json({ message: "Error Desconocido" });
     }
 }));
-routerUser.get("/inicio", (req, res) => {
-    return res.json({ MESSAGE: "HOLA" });
-});
 exports.default = routerUser;

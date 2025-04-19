@@ -13,10 +13,6 @@ const initProducto = (sequelize) => {
             allowNull: false,
             unique: true,
         },
-        marca: {
-            type: sequelize_1.DataTypes.TEXT,
-            allowNull: false,
-        },
         codigobarras: {
             type: sequelize_1.DataTypes.TEXT,
             allowNull: false,

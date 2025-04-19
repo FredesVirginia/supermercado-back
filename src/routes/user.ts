@@ -1,4 +1,4 @@
-import { Router, Request , Response } from "express";
+import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 
 import jwt from "jsonwebtoken";
@@ -46,7 +46,7 @@ routerUser.post("/register", async (req: any, res: any) => {
   res.status(404).json({message : "Campos incompletos "})
 });
 
-routerUser.post("/login", async (req: Request, res: Response) : Promise<void> => {
+routerUser.post("/login", async (req: any, res: any) => {
   const { email, password } = req.body;
   try {
     const existingUser = await User.findOne({
@@ -60,17 +60,11 @@ routerUser.post("/login", async (req: Request, res: Response) : Promise<void> =>
       ],
     });
 
-    if (!existingUser) {
-      res.status(400).json({ message: "Usuario no registrado" });
-      return
-    }
+    if (!existingUser) return res.status(400).json({ message: "Usuario no registrado" });
 
     //const isMatch = await bcrypt.compare(password, existingUser.get('password'));
     const isMatch = await bcrypt.compare(password, existingUser.password!);
-    if (!isMatch) {
-      res.status(400).json({ message: "Contraseña incorrecta" });
-      return
-    }
+    if (!isMatch) return res.status(400).json({ message: "Contraseña incorrecta" });
 
     // Si es SUPER_ADMIN, generamos el token y respondemos inmediatamente
     if (existingUser.getDataValue("role") === UserRole.SUPER_ADMIN) {
@@ -83,8 +77,7 @@ routerUser.post("/login", async (req: Request, res: Response) : Promise<void> =>
       const userData = existingUser.get({ plain: true });
       delete userData.password;
 
-     res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
-     return
+      return res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
     }
 
     // Si no es SUPER_ADMIN, verificamos que tenga un supermercado asignado
@@ -101,8 +94,7 @@ routerUser.post("/login", async (req: Request, res: Response) : Promise<void> =>
     });
 
     if (!supermercado) {
-      res.status(400).json({ message: "El usuario no tiene un supermercado asignado" }); // ✅ SE USA RETURN
-      return
+      return res.status(400).json({ message: "El usuario no tiene un supermercado asignado" }); // ✅ SE USA RETURN
     }
 
     // Si el usuario tiene supermercado, generamos el token y respondemos
@@ -119,12 +111,10 @@ routerUser.post("/login", async (req: Request, res: Response) : Promise<void> =>
     const userData = existingUser.get({ plain: true });
     delete userData.password;
 
-     res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
-     return
+    return res.status(200).json({ message: "Inicio de sesión exitoso", token, user: userData }); // ✅ SE USA RETURN
   } catch (error) {
     console.log("Error login", error);
-    res.status(500).json({ message: "Error INICIO SESION", error }); // ✅ SE USA RETURN
-    return
+    return res.status(500).json({ message: "Error INICIO SESION", error }); // ✅ SE USA RETURN
   }
 });
 
@@ -171,10 +161,7 @@ routerUser.post("/addSupermarket", authMiddleware, roleMiddleware([UserRole.SUPE
   }
 });
 
-routerUser.post(
-  "/solicitudes/supermercados",
-  authMiddleware,
-  roleMiddleware([UserRole.SUPER_ADMIN]),
+routerUser.post("/solicitudes/supermercados",authMiddleware,roleMiddleware([UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     const requiredField = [
       "name",
@@ -280,11 +267,6 @@ routerUser.post(
     }
   }
 );
-
-
-routerUser.get("/inicio" , (req : any , res : any)=>{
-    return res.json({   MESSAGE : "HOLA"})
-})
 
 
 

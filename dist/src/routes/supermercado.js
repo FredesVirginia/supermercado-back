@@ -67,9 +67,8 @@ routerSupermercado.post("/add/product", authMiddleware_1.authMiddleware, (0, aut
         if ((0, utils_1.validateRequiredStrings)(req.body, requiredField)) {
             const existingCategory = yield db_1.Categoria.findOne({ where: { name: categoria } });
             const existingProveedor = yield db_1.Proveedor.findOne({ where: { name: nombreProveedor } });
-            console.log("PROVEEDOR ", existingProveedor);
+            const existingMarca = yield db_1.Marca.findOne({ where: { name: marca } });
             const product = yield db_1.Producto.create({
-                marca,
                 fechavencimiento,
                 preciodescuento,
                 precio,
@@ -78,6 +77,7 @@ routerSupermercado.post("/add/product", authMiddleware_1.authMiddleware, (0, aut
                 categoria_id: existingCategory === null || existingCategory === void 0 ? void 0 : existingCategory.getDataValue("id"),
                 supermercado_id: req.user.supermercado_id,
                 proveedor_id: existingProveedor === null || existingProveedor === void 0 ? void 0 : existingProveedor.getDataValue("id"),
+                marca_id: existingMarca === null || existingMarca === void 0 ? void 0 : existingMarca.getDataValue("id")
             });
             return res.status(200).json({ data: product });
         }
@@ -95,6 +95,13 @@ routerSupermercado.post("/add/proveedor", authMiddleware_1.authMiddleware, (0, a
     console.log("DATOOOOOOOOOOOOOOS", req.user.supermercado_id);
     try {
         if ((0, utils_1.validateRequiredStrings)(req.body, requiredField)) {
+            const existingProveedor = yield db_1.Proveedor.findOne({
+                where: { email }
+            });
+            if (existingProveedor) {
+                res.status(404).json({ message: `Ya existe un proveedor con este email : ${email}` });
+                return;
+            }
             const proveedor = yield db_1.Proveedor.create({
                 name,
                 razonSocial,
@@ -151,18 +158,58 @@ routerSupermercado.post("/add/category", authMiddleware_1.authMiddleware, (0, au
         res.status(500).json({ error });
     }
 }));
+routerSupermercado.post("/add/marca", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const marcaNames = req.body;
+    try {
+        if (!Array.isArray(marcaNames) || marcaNames.length === 0) {
+            return res.status(400).json({ message: "Se requiere una lista de categorias" });
+        }
+        const uniqueNames = [
+            ...new Set(marcaNames.map((name) => (typeof name === "string" ? name.trim() : "")).filter((name) => name !== "")),
+        ];
+        const existingMarca = yield db_1.Marca.findAll({
+            where: {
+                name: {
+                    [sequelize_1.Op.in]: uniqueNames,
+                },
+            },
+        });
+        const existingNames = existingMarca.map((c) => c.name.toLowerCase());
+        const newMarcas = uniqueNames.filter((name) => !existingNames.includes(name.toLowerCase())).map((name) => ({ name }));
+        let createdMarcas = [];
+        if (newMarcas.length > 0) {
+            createdMarcas = yield db_1.Marca.bulkCreate(newMarcas, {
+                validate: true,
+                ignoreDuplicates: true,
+            });
+        }
+        res.status(200).json({ message: "Lista de Marca Creada" });
+    }
+    catch (error) {
+        res.status(500).json({ error });
+    }
+}));
 routerSupermercado.get("/category", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { category } = req.query;
-        console.log("EL PARAME S ", category);
         const allCategory = yield db_1.Categoria.findAll({
-            // WHERE name = 'Juan'
-            attributes: ["name"], // Seleccionar solo estos campos
+            attributes: ["name"],
         });
         res.status(200).send(allCategory);
     }
     catch (error) {
         console.log("Error Category", error);
+        res.status(500).json({ message: error });
+    }
+}));
+routerSupermercado.get("/marca", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const allMarca = yield db_1.Marca.findAll({
+            attributes: ["name"]
+        });
+        res.status(200).send(allMarca);
+    }
+    catch (error) {
+        console.log("Error Marca", error);
         res.status(500).json({ message: error });
     }
 }));
@@ -190,6 +237,52 @@ routerSupermercado.get("/product/category", (req, res) => __awaiter(void 0, void
             productos5dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 30),
             productos10dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 20),
             productos15dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 10),
+        };
+        const productosAgrupados2 = [
+            { cantidad: productosAgrupados.productos5dias.length, productos: productosAgrupados.productos5dias },
+            { cantidad: productosAgrupados.productos10dias.length, productos: productosAgrupados.productos10dias },
+            { cantidad: productosAgrupados.productos15dias.length, productos: productosAgrupados.productos15dias },
+        ];
+        res.status(200).json(productosAgrupados2);
+    }
+    catch (error) {
+        console.log("EEROE ", error);
+        res.status(500).json({ message: "Error del servidor" });
+    }
+}));
+routerSupermercado.get("/product/marca", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { marca, category } = req.query;
+        if (typeof marca !== "string" || !marca.trim()) {
+            res.status(400).json({ error: "El parámetro 'Marca' debe ser un string válido" });
+            return;
+        }
+        const typeMarca = yield db_1.Marca.findOne({
+            where: {
+                name: marca,
+            },
+        });
+        if (!typeMarca) {
+            return res.status(404).json({ error: "Categoría no encontrada" });
+        }
+        const whereFilter = {
+            marca_id: typeMarca.id
+        };
+        if (typeof category === "string" && category.trim()) {
+            whereFilter.category = category;
+        }
+        const allProductosByMarca = yield db_1.Producto.findAll({
+            include: [{ model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
+            where: {
+                marca_id: typeMarca === null || typeMarca === void 0 ? void 0 : typeMarca.id,
+            },
+            attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento"],
+            group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "marca.id", "categoria.id"],
+        });
+        const productosAgrupados = {
+            productos5dias: allProductosByMarca.filter((producto) => Number(producto.descuento) === 30),
+            productos10dias: allProductosByMarca.filter((producto) => Number(producto.descuento) === 20),
+            productos15dias: allProductosByMarca.filter((producto) => Number(producto.descuento) === 10),
         };
         const productosAgrupados2 = [
             { cantidad: productosAgrupados.productos5dias.length, productos: productosAgrupados.productos5dias },
@@ -318,6 +411,57 @@ routerSupermercado.get("/productos", (req, res) => __awaiter(void 0, void 0, voi
     catch (error) {
         console.error("Error:", error);
         res.status(500).json({ mensaje: "Error al obtener estadísticas " });
+    }
+}));
+routerSupermercado.post("/productos/modicar/precio", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { precio, codigoBarras } = req.body;
+    try {
+        const allProductos = yield db_1.Producto.findAll({
+            where: { codigobarras: codigoBarras }
+        });
+        if (allProductos.length === 0) {
+            res.status(404).json({ message: "CODIGO DE BARRAS INCORRECTO, PRODUCTO NO ENCONTRADO" });
+            return;
+        }
+        yield Promise.all(allProductos.map((producto) => __awaiter(void 0, void 0, void 0, function* () {
+            producto.precio = precio;
+            yield producto.save();
+        })));
+        let cantidadProductosModificados = allProductos.length;
+        res.status(200).json({ message: `Se modificaron ${cantidadProductosModificados} productos` });
+    }
+    catch (error) {
+        console.log("El error fue ", error);
+        res.status(500).json({ message: "Error del servidor", error: error });
+    }
+}));
+routerSupermercado.post("/productos/modicar/proovedor", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { emailProveedor, codigoBarras } = req.body;
+    try {
+        const allProductos = yield db_1.Producto.findAll({
+            where: { codigobarras: codigoBarras }
+        });
+        const existingProveedor = yield db_1.Proveedor.findOne({
+            where: { email: emailProveedor }
+        });
+        if (!existingProveedor) {
+            res.status(404).json({ message: `No se encontro proveedor con este Correro ${emailProveedor}` });
+            return;
+        }
+        if (allProductos.length === 0) {
+            res.status(404).json({ message: "CODIGO DE BARRAS INCORRECTO, PRODUCTO NO ENCONTRADO" });
+            return;
+        }
+        yield Promise.all(allProductos.map((producto) => __awaiter(void 0, void 0, void 0, function* () {
+            producto.proveedor_id = existingProveedor.id;
+            yield producto.save();
+        })));
+        let cantidadProductosModificados = allProductos.length;
+        res.status(200).json({ message: `Se modificaron ${cantidadProductosModificados} productos` });
+    }
+    catch (error) {
+        console.log("El error fue ", error);
+        res.status(500).json({ message: "Error del servidor", error: error });
     }
 }));
 routerSupermercado.post("/solicitud", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

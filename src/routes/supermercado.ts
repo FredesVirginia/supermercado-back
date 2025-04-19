@@ -1,6 +1,6 @@
-import { Request, Response, Router } from "express";
+import e, { Request, Response, Router } from "express";
 import { Op, Sequelize } from "sequelize";
-import { Categoria, Producto, Proveedor, SolicitudSupermercado, Supermercado, User } from "../db";
+import { Categoria, Producto, Proveedor, SolicitudSupermercado, Supermercado, User , Marca } from "../db";
 import { authMiddleware, roleMiddleware } from "../middelware/authMiddleware";
 import { UserRole } from "../types/types";
 import { validateRequiredStrings } from "../utils/utils";
@@ -64,10 +64,10 @@ routerSupermercado.post("/add/product",authMiddleware,roleMiddleware([UserRole.A
       if (validateRequiredStrings(req.body, requiredField)) {
         const existingCategory = await Categoria.findOne({ where: { name: categoria } });
         const existingProveedor = await Proveedor.findOne({ where: { name: nombreProveedor } });
-
-        console.log("PROVEEDOR ", existingProveedor);
+        const existingMarca = await Marca.findOne({where : {name:marca}})
+       
         const product = await Producto.create({
-          marca,
+         
           fechavencimiento,
           preciodescuento,
           precio,
@@ -76,6 +76,7 @@ routerSupermercado.post("/add/product",authMiddleware,roleMiddleware([UserRole.A
           categoria_id: existingCategory?.getDataValue("id"),
           supermercado_id: req.user.supermercado_id,
           proveedor_id: existingProveedor?.getDataValue("id"),
+          marca_id : existingMarca?.getDataValue("id")
         });
 
         return res.status(200).json({ data: product });
@@ -95,6 +96,14 @@ routerSupermercado.post("/add/proveedor",authMiddleware,roleMiddleware([UserRole
     console.log("DATOOOOOOOOOOOOOOS", req.user.supermercado_id);
     try {
       if (validateRequiredStrings(req.body, requiredField)) {
+        const existingProveedor = await Proveedor.findOne({
+          where:{email}
+        });
+
+        if(existingProveedor){
+          res.status(404).json({message : `Ya existe un proveedor con este email : ${email}`})
+          return
+        }
         const proveedor = await Proveedor.create({
           name,
           razonSocial,
@@ -163,18 +172,70 @@ routerSupermercado.post("/add/category", authMiddleware,roleMiddleware([UserRole
   }
 );
 
+
+
+routerSupermercado.post("/add/marca", authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+  async (req: any, res: any) => {
+    const marcaNames: string[] = req.body;
+    try {
+      if (!Array.isArray(marcaNames) || marcaNames.length === 0) {
+        return res.status(400).json({ message: "Se requiere una lista de categorias" });
+      }
+
+      const uniqueNames = [
+        ...new Set(marcaNames.map((name) => (typeof name === "string" ? name.trim() : "")).filter((name) => name !== "")),
+      ];
+
+      const existingMarca = await Marca.findAll({
+        where: {
+          name: {
+            [Op.in]: uniqueNames,
+          },
+        },
+      });
+
+      const existingNames = existingMarca.map((c: { name: string }) => c.name.toLowerCase());
+      const newMarcas = uniqueNames.filter((name) => !existingNames.includes(name.toLowerCase())).map((name) => ({ name }));
+
+      let createdMarcas = [];
+      if (newMarcas.length > 0) {
+        createdMarcas = await Marca.bulkCreate(newMarcas, {
+          validate: true,
+          ignoreDuplicates: true,
+        });
+      }
+
+      res.status(200).json({ message: "Lista de Marca Creada" });
+    } catch (error) {
+      res.status(500).json({ error });
+    }
+  }
+);
+
 routerSupermercado.get("/category", async (req: Request, res: Response) => {
   try {
-    const { category } = req.query;
-    console.log("EL PARAME S ", category);
+   
     const allCategory = await Categoria.findAll({
-      // WHERE name = 'Juan'
-      attributes: ["name"], // Seleccionar solo estos campos
+     
+      attributes: ["name"], 
     });
 
     res.status(200).send(allCategory);
   } catch (error) {
     console.log("Error Category", error);
+    res.status(500).json({ message: error });
+  }
+});
+
+routerSupermercado.get("/marca", async (req: Request, res: Response) => {
+  try {
+    const allMarca = await Marca.findAll({
+      attributes : ["name"]
+    });
+
+    res.status(200).send(allMarca);
+  } catch (error) {
+    console.log("Error Marca", error);
     res.status(500).json({ message: error });
   }
 });
@@ -207,6 +268,60 @@ routerSupermercado.get("/product/category", async (req: Request, res: Response) 
       productos5dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 30),
       productos10dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 20),
       productos15dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 10),
+    };
+
+    const productosAgrupados2 = [
+      { cantidad: productosAgrupados.productos5dias.length, productos: productosAgrupados.productos5dias },
+      { cantidad: productosAgrupados.productos10dias.length, productos: productosAgrupados.productos10dias },
+      { cantidad: productosAgrupados.productos15dias.length, productos: productosAgrupados.productos15dias },
+    ];
+
+    res.status(200).json(productosAgrupados2);
+  } catch (error) {
+    console.log("EEROE ", error);
+    res.status(500).json({ message: "Error del servidor" });
+  }
+});
+
+routerSupermercado.get("/product/marca", async (req: any, res: any) => {
+  try {
+    const { marca , category} = req.query;
+
+    if (typeof marca !== "string" || !marca.trim()) {
+      res.status(400).json({ error: "El parámetro 'Marca' debe ser un string válido" });
+      return;
+    }
+
+    const typeMarca = await Marca.findOne({
+      where: {
+        name: marca,
+      },
+    });
+
+    if (!typeMarca) {
+      return res.status(404).json({ error: "Categoría no encontrada" });
+    }
+    const whereFilter : any = {
+      marca_id: typeMarca.id
+    }
+
+    if (typeof category === "string" && category.trim()) {
+      whereFilter.category = category;
+    }
+
+    const allProductosByMarca = await Producto.findAll({
+      include: [{ model: Marca, as: "marca", attributes: ["name"] }, { model: Categoria, as: "categoria", attributes: ["name"] }],
+      where: {
+        marca_id: typeMarca?.id,
+      },
+      attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento"],
+      group: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "marca.id" , "categoria.id"],
+    });
+
+    const productosAgrupados = {
+      productos5dias: allProductosByMarca.filter((producto) => Number(producto.descuento) === 30),
+      productos10dias: allProductosByMarca.filter((producto) => Number(producto.descuento) === 20),
+      productos15dias: allProductosByMarca.filter((producto) => Number(producto.descuento) === 10),
     };
 
     const productosAgrupados2 = [
@@ -342,6 +457,71 @@ routerSupermercado.get("/productos", async (req, res) => {
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ mensaje: "Error al obtener estadísticas " });
+  }
+});
+
+routerSupermercado.post("/productos/modicar/precio" ,authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]), async (req : Request , res : Response)=>{
+  const { precio , codigoBarras } = req.body;
+
+  try{
+    const allProductos = await Producto.findAll({
+      where : { codigobarras : codigoBarras}
+    })
+
+    if(allProductos.length === 0){
+      res.status(404).json({message : "CODIGO DE BARRAS INCORRECTO, PRODUCTO NO ENCONTRADO"});
+      return
+    }
+
+    await Promise.all(
+      allProductos.map(async (producto)=>{
+        producto.precio=precio;
+        await producto.save()
+      })
+    )
+
+    let cantidadProductosModificados =allProductos.length;
+    res.status(200).json({message : `Se modificaron ${cantidadProductosModificados} productos`})
+  }catch(error){
+    console.log("El error fue " , error)
+    res.status(500).json({message : "Error del servidor" , error : error})
+  }
+});
+
+routerSupermercado.post("/productos/modicar/proovedor" ,authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]), async (req : Request , res : Response)=>{
+  const { emailProveedor , codigoBarras } = req.body;
+
+  try{
+    const allProductos = await Producto.findAll({
+      where : { codigobarras : codigoBarras}
+    })
+
+    const existingProveedor = await Proveedor.findOne({
+      where: {email : emailProveedor}
+    })
+
+    if(!existingProveedor){
+      res.status(404).json({message : `No se encontro proveedor con este Correro ${emailProveedor}`})
+      return
+    }
+
+    if(allProductos.length === 0){
+      res.status(404).json({message : "CODIGO DE BARRAS INCORRECTO, PRODUCTO NO ENCONTRADO"});
+      return
+    }
+
+    await Promise.all(
+      allProductos.map(async (producto)=>{
+        (producto as any).proveedor_id = existingProveedor.id;
+        await producto.save()
+      })
+    )
+
+    let cantidadProductosModificados =allProductos.length;
+    res.status(200).json({message : `Se modificaron ${cantidadProductosModificados} productos`})
+  }catch(error){
+    console.log("El error fue " , error)
+    res.status(500).json({message : "Error del servidor" , error : error})
   }
 });
 

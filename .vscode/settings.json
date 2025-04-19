@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#f3b7e9",
@@ -19,4 +20,27 @@
         "titleBar.inactiveForeground": "#15202b99"
     },
     "peacock.color": "#eb8cdb"
+=======
+{
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#509bb7",
+        "activityBar.background": "#509bb7",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#ecd2e5",
+        "activityBarBadge.foreground": "#15202b",
+        "commandCenter.border": "#e7e7e799",
+        "sash.hoverBorder": "#509bb7",
+        "statusBar.background": "#3e7e96",
+        "statusBar.foreground": "#e7e7e7",
+        "statusBarItem.hoverBackground": "#509bb7",
+        "statusBarItem.remoteBackground": "#3e7e96",
+        "statusBarItem.remoteForeground": "#e7e7e7",
+        "titleBar.activeBackground": "#3e7e96",
+        "titleBar.activeForeground": "#e7e7e7",
+        "titleBar.inactiveBackground": "#3e7e9699",
+        "titleBar.inactiveForeground": "#e7e7e799"
+    },
+    "peacock.color": "#3e7e96"
+>>>>>>> feat/send-email-users
 }

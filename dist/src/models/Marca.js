@@ -1,14 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initCategoria = void 0;
+exports.initMarca = void 0;
 const sequelize_1 = require("sequelize");
-class Categoria extends sequelize_1.Model {
+class Marca extends sequelize_1.Model {
     getNombreMayusculas() {
         return this.name.toUpperCase();
     }
 }
-const initCategoria = (sequelize) => {
-    Categoria.init({
+const initMarca = (sequelize) => {
+    Marca.init({
         id: {
             type: sequelize_1.DataTypes.UUID,
             defaultValue: sequelize_1.DataTypes.UUIDV4,
@@ -26,9 +26,9 @@ const initCategoria = (sequelize) => {
         },
     }, {
         sequelize,
-        modelName: "Categoria",
+        modelName: "Marca",
     });
-    return Categoria;
+    return Marca;
 };
-exports.initCategoria = initCategoria;
-exports.default = initCategoria;
+exports.initMarca = initMarca;
+exports.default = initMarca;
