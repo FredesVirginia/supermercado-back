@@ -161,10 +161,7 @@ routerUser.post("/addSupermarket", authMiddleware, roleMiddleware([UserRole.SUPE
   }
 });
 
-routerUser.post(
-  "/solicitudes/supermercados",
-  authMiddleware,
-  roleMiddleware([UserRole.SUPER_ADMIN]),
+routerUser.post("/solicitudes/supermercados",authMiddleware,roleMiddleware([UserRole.SUPER_ADMIN]),
   async (req: any, res: any) => {
     const requiredField = [
       "name",

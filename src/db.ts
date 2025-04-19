@@ -15,6 +15,7 @@ import initReporte from "./models/Reporte";
 import initSupermercado from "./models/Supermercado";
 import initProveedor from "./models/Proveedor"
 import initSolicitudSupermercado from "./models/SolicitudesSupermercados"
+import initMarca from "./models/Marca";
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_DATABASE}`, {
   logging: false, 
   native: false, 
@@ -54,6 +55,7 @@ const Promocion = initPromocion(sequelize);
 const Reporte = initReporte(sequelize);
 const Proveedor = initProveedor(sequelize)
 const SolicitudSupermercado = initSolicitudSupermercado(sequelize)
+const Marca = initMarca(sequelize)
 
 const models = sequelize.models; 
 // 📌 Un Supermercado pertenece a un Usuario (Administrador)
@@ -63,6 +65,10 @@ User.hasMany(Supermercado, { foreignKey: "admin_id", as: "supermercados" });
 // 📌 Un Producto pertenece a una Categoría
 Producto.belongsTo(Categoria, { foreignKey: "categoria_id", as: "categoria" });
 Categoria.hasMany(Producto, { foreignKey: "categoria_id", as: "productos" });
+
+// 📌 Un Producto tiene a una Marca
+Producto.belongsTo(Marca, { foreignKey: "marca_id", as: "marca" });
+Marca.hasMany(Producto, { foreignKey: "marca_id", as: "productos" });
 
 // UN producto tiene un proveedor y un proveedor tiene muchos productos
 Producto.belongsTo(Proveedor, { foreignKey: "proveedor_id", as: "proveedor" });
@@ -114,4 +120,4 @@ export const conn = sequelize;
 //   conn,
 // };
 
-export { sequelize, models , User , Producto , Proveedor , Supermercado , Categoria , SolicitudSupermercado};
+export { sequelize, models , User , Producto , Proveedor , Supermercado , Categoria , SolicitudSupermercado , Marca};
