@@ -341,22 +341,22 @@ routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
   try {
     const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = await Promise.all([
       Producto.findAll({
-        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 10 } },
-        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
-        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+        attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
+        group: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
       }),
       Producto.findAll({
-        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 20 } },
-        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
-        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+        attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
+        group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
       }),
       Producto.findAll({
-        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }, { model: Marca, as: "marca", attributes: ["name"] }],
         where: { descuento: { [Op.eq]: 30 } },
-        attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
-        group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+        attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
+        group: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"] ,
       }),
     ]);
 
