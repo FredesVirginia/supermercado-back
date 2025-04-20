@@ -7,6 +7,7 @@ interface ProductoAttributes {
   codigobarras: string;
   fechavencimiento: Date;
   descuento: number;
+  // img : string;
   precio: number;
   preciodescuento: number;
   categoria_id? : string;
@@ -28,7 +29,7 @@ class Producto extends Model<ProductoAttributes, ProductoCreationAttributes>
   public descuento!: number;
   public precio!: number;
   public preciodescuento!: number;
-  
+  // public img!: string;
 
   // Timestamps automáticos de Sequelize
   public readonly createdAt!: Date;
@@ -50,6 +51,10 @@ const initProducto = (sequelize: Sequelize): typeof Producto => {
         type: DataTypes.TEXT,
         allowNull: false,
       },
+      // img: {
+      //   type: DataTypes.TEXT,
+      //   allowNull: false,
+      // },
       fechavencimiento: {
         type: DataTypes.DATE,
         allowNull: false,

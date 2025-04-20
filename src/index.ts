@@ -3,7 +3,7 @@ import { conn } from "./db";
 import { setupSocket } from "./socket/socket";
 import { checkExpiringProducts } from "./services/descuentoServices";
 import cron from "node-cron";
-import { sendEmailPromotions } from "./controllers/sendEmail";
+import {  sendEmailPromotions2 } from "./controllers/sendEmail";
 
 const httpServer = setupSocket(server); // Usa setupSocket
 
@@ -19,8 +19,8 @@ cron.schedule("53 17 * * *", () => {
   checkExpiringProducts();
 });
 
-cron.schedule("21 02 * * * " ,()=>{
-  console.log("INICIANDO ENVIO DE CORREOS");
-  sendEmailPromotions()
+// cron.schedule("44 17 * * * " ,()=>{
+//   console.log("INICIANDO ENVIO DE CORREOS");
+//   sendEmailPromotions2()
 
-} )
+// } )
