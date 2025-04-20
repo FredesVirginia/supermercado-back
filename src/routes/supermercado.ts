@@ -256,12 +256,12 @@ routerSupermercado.get("/product/category", async (req: Request, res: Response) 
     });
 
     const allProductosByCategory = await Producto.findAll({
-      include: [{ model: Categoria, as: "categoria", attributes: ["name"] }],
+      include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] } , { model: Proveedor, as: "proveedor"}],
       where: {
         categoria_id: typeCategory?.id,
       },
-      attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento"],
-      group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+      attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento" ,  "codigobarras", "proveedor.id"],
+      group: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "categoria.id" , "marca.id" , "proveedor.id"],
     });
 
     const productosAgrupados = {
@@ -283,7 +283,7 @@ routerSupermercado.get("/product/category", async (req: Request, res: Response) 
   }
 });
 
-routerSupermercado.get("/product/marca", async (req: any, res: any) => {
+routerSupermercado.get("/product/marca", async (req: any, res: any , ) => {
   try {
     const { marca , category} = req.query;
 
@@ -298,24 +298,26 @@ routerSupermercado.get("/product/marca", async (req: any, res: any) => {
       },
     });
 
-    if (!typeMarca) {
-      return res.status(404).json({ error: "Categoría no encontrada" });
-    }
-    const whereFilter : any = {
-      marca_id: typeMarca.id
-    }
+   
+    const whereClause: any = {
+      marca_id: typeMarca!.id
+    };
 
+    
     if (typeof category === "string" && category.trim()) {
-      whereFilter.category = category;
+      const typeCategory = await Categoria.findOne({ where: { name: category } });
+
+      if (typeCategory) {
+        whereClause.categoria_id = typeCategory.id;
+      }
+    
     }
 
     const allProductosByMarca = await Producto.findAll({
-      include: [{ model: Marca, as: "marca", attributes: ["name"] }, { model: Categoria, as: "categoria", attributes: ["name"] }],
-      where: {
-        marca_id: typeMarca?.id,
-      },
-      attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento"],
-      group: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "marca.id" , "categoria.id"],
+      include: [{ model: Marca, as: "marca", attributes: ["name"] }, { model: Categoria, as: "categoria", attributes: ["name"] },  { model: Proveedor, as: "proveedor"}],
+      where: whereClause,
+      attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento" ,  "codigobarras", "proveedor.id"],
+      group: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "marca.id" , "categoria.id", "proveedor.id"],
     });
 
     const productosAgrupados = {
@@ -341,22 +343,22 @@ routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
   try {
     const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = await Promise.all([
       Producto.findAll({
-        include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] }],
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] } , { model: Proveedor, as: "proveedor" }],
         where: { descuento: { [Op.eq]: 10 } },
-        attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
-        group: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
+        attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id", "codigobarras", "marca.id" , "proveedor.id"],
+        group: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id" , "marca.id" ,  "proveedor.id"],
       }),
       Producto.findAll({
-        include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] }],
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] }, { model: Proveedor, as: "proveedor" }],
         where: { descuento: { [Op.eq]: 20 } },
-        attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
-        group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
+        attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras","categoria.id" , "marca.id" ,  "proveedor.id"],
+        group: ["precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "categoria.id" , "marca.id" ,  "proveedor.id"],
       }),
       Producto.findAll({
-        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }, { model: Marca, as: "marca", attributes: ["name"] }],
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }, { model: Marca, as: "marca", attributes: ["name"] }, { model: Proveedor, as: "proveedor" }],
         where: { descuento: { [Op.eq]: 30 } },
-        attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"],
-        group: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id" , "marca.id"] ,
+        attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "categoria.id" , "marca.id" ,  "proveedor.id"],
+        group: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "categoria.id" , "marca.id" ,  "proveedor.id"] ,
       }),
     ]);
 
@@ -460,7 +462,7 @@ routerSupermercado.get("/productos", async (req, res) => {
   }
 });
 
-routerSupermercado.post("/productos/modicar/precio" ,authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]), async (req : Request , res : Response)=>{
+routerSupermercado.put("/productos/modicar/precio" ,authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]), async (req : Request , res : Response)=>{
   const { precio , codigoBarras } = req.body;
 
   try{
@@ -488,8 +490,8 @@ routerSupermercado.post("/productos/modicar/precio" ,authMiddleware,roleMiddlewa
   }
 });
 
-routerSupermercado.post("/productos/modicar/proovedor" ,authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]), async (req : Request , res : Response)=>{
-  const { emailProveedor , codigoBarras } = req.body;
+routerSupermercado.put("/productos/modicar/proovedor" ,authMiddleware,roleMiddleware([UserRole.ADMIN, UserRole.SUPER_ADMIN]), async (req : Request , res : Response)=>{
+  const { nameProveedor , codigoBarras } = req.body;
 
   try{
     const allProductos = await Producto.findAll({
@@ -497,11 +499,11 @@ routerSupermercado.post("/productos/modicar/proovedor" ,authMiddleware,roleMiddl
     })
 
     const existingProveedor = await Proveedor.findOne({
-      where: {email : emailProveedor}
+      where: {name :nameProveedor}
     })
 
     if(!existingProveedor){
-      res.status(404).json({message : `No se encontro proveedor con este Correro ${emailProveedor}`})
+      res.status(404).json({message : `No se encontro proveedor con este Correro ${nameProveedor}`})
       return
     }
 
