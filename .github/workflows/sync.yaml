@@ -33,7 +33,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
            cd /home/ec2-user/supermercado-back
-            git pull origin master
+           git status
+           git pull origin master || echo "⚠️ Pull falló"
             
             echo "🧹 Deteniendo servicios..."
             docker-compose down
