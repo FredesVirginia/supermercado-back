@@ -341,6 +341,53 @@ routerSupermercado.get("/product/marca", async (req: any, res: any , ) => {
 
 routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
 
+
+  try {
+    const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = await Promise.all([
+      Producto.findAll({
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] } , { model: Proveedor, as: "proveedor" }],
+        where: { descuento: { [Op.eq]: 10 } },
+        attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id", "codigobarras", "marca.id" , "proveedor.id"],
+        group: [ "precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id" , "marca.id" ,  "proveedor.id"],
+      }),
+      Producto.findAll({
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] } , { model: Marca, as: "marca", attributes: ["name"] }, { model: Proveedor, as: "proveedor" }],
+        where: { descuento: { [Op.eq]: 20 } },
+        attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras","categoria.id" , "marca.id" ,  "proveedor.id"],
+        group: ["precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "categoria.id" , "marca.id" ,  "proveedor.id"],
+      }),
+      Producto.findAll({
+        include: [{ model: Categoria, as: "categoria", attributes: ["name"] }, { model: Marca, as: "marca", attributes: ["name"] }, { model: Proveedor, as: "proveedor" }],
+        where: { descuento: { [Op.eq]: 30 } },
+        attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "categoria.id" , "marca.id" ,  "proveedor.id"],
+        group: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "categoria.id" , "marca.id" ,  "proveedor.id"] ,
+      }),
+    ]);
+
+    const productoAgrupados = [
+      {
+        cantidad: productosDescuento5Dias.length,
+        productos: productosDescuento5Dias,
+      },
+      {
+        cantidad: productosDescuento10Dias.length,
+        productos: productosDescuento10Dias,
+      },
+      {
+        cantidad: productosDescuento15Dias.length,
+        productos: productosDescuento15Dias,
+      },
+    ];
+
+    res.status(200).json(productoAgrupados);
+  } catch (error) {
+    console.log("Error al obtener productos con descuento ", error);
+    res.status(500).json({ message: "Error interno en el servidor" , error : error}); // Corregido "Erro" → "Error"
+  }
+});
+
+routerSupermercado.get("/promociones2", async (req: Request, res: Response) => {
+
   
   try {
     const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = await Promise.all([
