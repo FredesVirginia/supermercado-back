@@ -16,6 +16,9 @@ const authMiddleware_1 = require("../middelware/authMiddleware");
 const types_1 = require("../types/types");
 const utils_1 = require("../utils/utils");
 const routerSupermercado = (0, express_1.Router)();
+routerSupermercado.get("hoy", (res, req) => __awaiter(void 0, void 0, void 0, function* () {
+    res.status(200).json({ message: "HOLA TOTO" });
+}));
 routerSupermercado.post("/add", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const requiredFields = ["name", "address", "provincia", "departamento", "localidad"];
     const { admidEmail, supermercado } = req.body;
@@ -295,6 +298,49 @@ routerSupermercado.get("/product/marca", (req, res) => __awaiter(void 0, void 0,
     }
 }));
 routerSupermercado.get("/promociones", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = yield Promise.all([
+            db_1.Producto.findAll({
+                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor" }],
+                where: { descuento: { [sequelize_1.Op.eq]: 10 } },
+                attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id", "codigobarras", "marca.id", "proveedor.id"],
+                group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
+            }),
+            db_1.Producto.findAll({
+                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor" }],
+                where: { descuento: { [sequelize_1.Op.eq]: 20 } },
+                attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
+                group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
+            }),
+            db_1.Producto.findAll({
+                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor" }],
+                where: { descuento: { [sequelize_1.Op.eq]: 30 } },
+                attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
+                group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
+            }),
+        ]);
+        const productoAgrupados = [
+            {
+                cantidad: productosDescuento5Dias.length,
+                productos: productosDescuento5Dias,
+            },
+            {
+                cantidad: productosDescuento10Dias.length,
+                productos: productosDescuento10Dias,
+            },
+            {
+                cantidad: productosDescuento15Dias.length,
+                productos: productosDescuento15Dias,
+            },
+        ];
+        res.status(200).json(productoAgrupados);
+    }
+    catch (error) {
+        console.log("Error al obtener productos con descuento ", error);
+        res.status(500).json({ message: "Error interno en el servidor", error: error }); // Corregido "Erro" → "Error"
+    }
+}));
+routerSupermercado.get("/promociones2", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = yield Promise.all([
             db_1.Producto.findAll({
