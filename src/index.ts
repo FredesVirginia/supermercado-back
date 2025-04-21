@@ -23,4 +23,8 @@ cron.schedule("53 17 * * *", () => {
 //   console.log("INICIANDO ENVIO DE CORREOS");
 //   sendEmailPromotions2()
 
+
+
+
+
 // } )
