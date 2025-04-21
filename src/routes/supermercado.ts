@@ -7,6 +7,10 @@ import { validateRequiredStrings } from "../utils/utils";
 
 const routerSupermercado = Router();
 
+routerSupermercado.get("hoy" , async ( res : Response , req : Request)=>{
+  res.status(200).json({message : "HOLA TOTO"})
+})
+
 routerSupermercado.post("/add", authMiddleware, roleMiddleware([UserRole.SUPER_ADMIN]), async (req: any, res: any) => {
   const requiredFields = ["name", "address", "provincia", "departamento", "localidad"];
   const { admidEmail, supermercado } = req.body;
@@ -432,6 +436,8 @@ routerSupermercado.get("/promociones2", async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error interno en el servidor" , error : error}); // Corregido "Erro" → "Error"
   }
 });
+
+
 
 routerSupermercado.get("/productos/stock", async (req: Request, res: Response) => {
   try {
