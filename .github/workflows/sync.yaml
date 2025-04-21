@@ -39,7 +39,7 @@ jobs:
             echo "🧹 Deteniendo servicios..."
             docker-compose down
 
-            echo "🧼 Limpiando contenedores, imágenes y volúmenes no usados..."
+            echo "🧼 Limpiando contenedores , imágenes y volúmenes no usados..."
             docker container prune -f
             docker image prune -a -f
             docker volume prune -f
