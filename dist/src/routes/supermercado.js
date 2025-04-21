@@ -334,7 +334,7 @@ routerSupermercado.get("/promociones", (req, res) => __awaiter(void 0, void 0, v
     }
     catch (error) {
         console.log("Error al obtener productos con descuento ", error);
-        res.status(500).json({ message: "Error interno en el servidor" }); // Corregido "Erro" → "Error"
+        res.status(500).json({ message: "Error interno en el servidor", error: error }); // Corregido "Erro" → "Error"
     }
 }));
 routerSupermercado.get("/productos/stock", (req, res) => __awaiter(void 0, void 0, void 0, function* () {

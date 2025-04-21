@@ -340,6 +340,8 @@ routerSupermercado.get("/product/marca", async (req: any, res: any , ) => {
 });
 
 routerSupermercado.get("/promociones", async (req: Request, res: Response) => {
+
+  
   try {
     const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = await Promise.all([
       Producto.findAll({
