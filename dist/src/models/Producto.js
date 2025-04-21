@@ -17,6 +17,10 @@ const initProducto = (sequelize) => {
             type: sequelize_1.DataTypes.TEXT,
             allowNull: false,
         },
+        // img: {
+        //   type: DataTypes.TEXT,
+        //   allowNull: false,
+        // },
         fechavencimiento: {
             type: sequelize_1.DataTypes.DATE,
             allowNull: false,

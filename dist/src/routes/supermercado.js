@@ -226,12 +226,12 @@ routerSupermercado.get("/product/category", (req, res) => __awaiter(void 0, void
             },
         });
         const allProductosByCategory = yield db_1.Producto.findAll({
-            include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
+            include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor" }],
             where: {
                 categoria_id: typeCategory === null || typeCategory === void 0 ? void 0 : typeCategory.id,
             },
-            attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento"],
-            group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+            attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "proveedor.id"],
+            group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
         });
         const productosAgrupados = {
             productos5dias: allProductosByCategory.filter((producto) => Number(producto.descuento) === 30),
@@ -262,22 +262,20 @@ routerSupermercado.get("/product/marca", (req, res) => __awaiter(void 0, void 0,
                 name: marca,
             },
         });
-        if (!typeMarca) {
-            return res.status(404).json({ error: "Categoría no encontrada" });
-        }
-        const whereFilter = {
+        const whereClause = {
             marca_id: typeMarca.id
         };
         if (typeof category === "string" && category.trim()) {
-            whereFilter.category = category;
+            const typeCategory = yield db_1.Categoria.findOne({ where: { name: category } });
+            if (typeCategory) {
+                whereClause.categoria_id = typeCategory.id;
+            }
         }
         const allProductosByMarca = yield db_1.Producto.findAll({
-            include: [{ model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
-            where: {
-                marca_id: typeMarca === null || typeMarca === void 0 ? void 0 : typeMarca.id,
-            },
-            attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento"],
-            group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "marca.id", "categoria.id"],
+            include: [{ model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor" }],
+            where: whereClause,
+            attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "proveedor.id"],
+            group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "marca.id", "categoria.id", "proveedor.id"],
         });
         const productosAgrupados = {
             productos5dias: allProductosByMarca.filter((producto) => Number(producto.descuento) === 30),
@@ -300,22 +298,22 @@ routerSupermercado.get("/promociones", (req, res) => __awaiter(void 0, void 0, v
     try {
         const [productosDescuento5Dias, productosDescuento10Dias, productosDescuento15Dias] = yield Promise.all([
             db_1.Producto.findAll({
-                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
+                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor" }],
                 where: { descuento: { [sequelize_1.Op.eq]: 10 } },
-                attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
-                group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+                attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id", "codigobarras", "marca.id", "proveedor.id"],
+                group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
             }),
             db_1.Producto.findAll({
-                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
+                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor" }],
                 where: { descuento: { [sequelize_1.Op.eq]: 20 } },
-                attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
-                group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+                attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
+                group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
             }),
             db_1.Producto.findAll({
-                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }],
+                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor" }],
                 where: { descuento: { [sequelize_1.Op.eq]: 30 } },
-                attributes: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
-                group: ["marca", "precio", "descuento", "preciodescuento", "fechavencimiento", "categoria.id"],
+                attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
+                group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"],
             }),
         ]);
         const productoAgrupados = [
@@ -413,7 +411,7 @@ routerSupermercado.get("/productos", (req, res) => __awaiter(void 0, void 0, voi
         res.status(500).json({ mensaje: "Error al obtener estadísticas " });
     }
 }));
-routerSupermercado.post("/productos/modicar/precio", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+routerSupermercado.put("/productos/modicar/precio", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { precio, codigoBarras } = req.body;
     try {
         const allProductos = yield db_1.Producto.findAll({
@@ -435,17 +433,17 @@ routerSupermercado.post("/productos/modicar/precio", authMiddleware_1.authMiddle
         res.status(500).json({ message: "Error del servidor", error: error });
     }
 }));
-routerSupermercado.post("/productos/modicar/proovedor", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { emailProveedor, codigoBarras } = req.body;
+routerSupermercado.put("/productos/modicar/proovedor", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { nameProveedor, codigoBarras } = req.body;
     try {
         const allProductos = yield db_1.Producto.findAll({
             where: { codigobarras: codigoBarras }
         });
         const existingProveedor = yield db_1.Proveedor.findOne({
-            where: { email: emailProveedor }
+            where: { name: nameProveedor }
         });
         if (!existingProveedor) {
-            res.status(404).json({ message: `No se encontro proveedor con este Correro ${emailProveedor}` });
+            res.status(404).json({ message: `No se encontro proveedor con este Correro ${nameProveedor}` });
             return;
         }
         if (allProductos.length === 0) {
