@@ -10,12 +10,46 @@ import { Op } from "sequelize";
 
 const routerUser = Router();
 
+
+routerUser.post("/changePassword" , async(req : Request , res : Response)=>{
+
+ try {
+  const { email , newPassword } = req.body;
+  const requiredField = ["email" , "newPassword"];
+
+  if( validateRequiredStrings( req.body , requiredField)){
+    const existingUser = await User.findOne({
+      where : {email}
+    })
+
+    if(!existingUser){
+      res.status(400).json({message : `No se encontro un usuario con este correo ${email}`})
+      return
+    }
+ 
+    const hashedPassword = await bcrypt.hash(newPassword , 10)
+
+    await User.update(
+      {password : hashedPassword},
+      {where : {email}}
+    )
+    res.status(200).json({message : "Se Actualizo la contraseña"})
+    return
+  }
+
+  res.status(400).json({message : "TODOS LOS CAMPOS SON OBLIGATORIOS"})
+ }catch(error : any){
+  console.log("El error fue" , error);
+  res.status(500).json({mesage : `Error interno del servidor ${error}`})
+ }
+
+})
 routerUser.post("/register", async (req: any, res: any) => {
   const { name, email, password, role, surname, phone, dni } = req.body;
   const requiredFields = ["name", "email", "password", "role", "surname", "phone", "dni"];
 
 
-  if (validateRequiredStrings(requiredFields, req.body)) {
+  if (validateRequiredStrings( req.body , requiredFields,)) {
     const existingUserDni = await User.findOne({
       where: { dni },
     });
