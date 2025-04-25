@@ -1,7 +1,7 @@
 import server from "./app";
 import { conn } from "./db";
 import { setupSocket } from "./socket/socket";
-import { checkExpiringProducts } from "./services/descuentoServices";
+import { checkExpiringProducts , } from "./services/descuentoServices";
 import cron from "node-cron";
 import {  sendEmailPromotions2 } from "./controllers/sendEmail";
 
@@ -14,10 +14,11 @@ conn.sync({ force: false }).then(() => {
   });
 });
 
-cron.schedule("53 17 * * *", () => {
+cron.schedule("30 21 * * *", () => {
   console.log("Revisando productos proximos a expirar ...");
   checkExpiringProducts();
 });
+
 
 // cron.schedule("44 17 * * * " ,()=>{
 //   console.log("INICIANDO ENVIO DE CORREOS");

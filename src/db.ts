@@ -16,6 +16,7 @@ import initSupermercado from "./models/Supermercado";
 import initProveedor from "./models/Proveedor"
 import initSolicitudSupermercado from "./models/SolicitudesSupermercados"
 import initMarca from "./models/Marca";
+const isProduction = process.env.NODE_ENV === 'production';
 const sequelize = new Sequelize(`postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_DATABASE}`, {
   dialect: 'postgres',
   dialectOptions: isProduction
