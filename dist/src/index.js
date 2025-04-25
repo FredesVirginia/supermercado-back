@@ -15,7 +15,7 @@ db_1.conn.sync({ force: false }).then(() => {
         console.log("Escuchando en el puerto  8000 Harry");
     });
 });
-node_cron_1.default.schedule("53 17 * * *", () => {
+node_cron_1.default.schedule("30 21 * * *", () => {
     console.log("Revisando productos proximos a expirar ...");
     (0, descuentoServices_1.checkExpiringProducts)();
 });

@@ -21,10 +21,34 @@ const types_1 = require("../types/types");
 const db_1 = require("../db");
 const sequelize_1 = require("sequelize");
 const routerUser = (0, express_1.Router)();
+routerUser.post("/changePassword", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email, newPassword } = req.body;
+        const requiredField = ["email", "newPassword"];
+        if ((0, utils_1.validateRequiredStrings)(req.body, requiredField)) {
+            const existingUser = yield db_1.User.findOne({
+                where: { email }
+            });
+            if (!existingUser) {
+                res.status(400).json({ message: `No se encontro un usuario con este correo ${email}` });
+                return;
+            }
+            const hashedPassword = yield bcryptjs_1.default.hash(newPassword, 10);
+            yield db_1.User.update({ password: hashedPassword }, { where: { email } });
+            res.status(200).json({ message: "Se Actualizo la contraseña" });
+            return;
+        }
+        res.status(400).json({ message: "TODOS LOS CAMPOS SON OBLIGATORIOS" });
+    }
+    catch (error) {
+        console.log("El error fue", error);
+        res.status(500).json({ mesage: `Error interno del servidor ${error}` });
+    }
+}));
 routerUser.post("/register", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name, email, password, role, surname, phone, dni } = req.body;
     const requiredFields = ["name", "email", "password", "role", "surname", "phone", "dni"];
-    if ((0, utils_1.validateRequiredStrings)(requiredFields, req.body)) {
+    if ((0, utils_1.validateRequiredStrings)(req.body, requiredFields)) {
         const existingUserDni = yield db_1.User.findOne({
             where: { dni },
         });

@@ -8,6 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const sequelize_1 = require("sequelize");
@@ -15,6 +18,9 @@ const db_1 = require("../db");
 const authMiddleware_1 = require("../middelware/authMiddleware");
 const types_1 = require("../types/types");
 const utils_1 = require("../utils/utils");
+const descuentoServices_1 = require("../services/descuentoServices");
+const node_cron_1 = __importDefault(require("node-cron"));
+const cronJob_1 = require("../cron/cronJob");
 const routerSupermercado = (0, express_1.Router)();
 routerSupermercado.get("hoy", (res, req) => __awaiter(void 0, void 0, void 0, function* () {
     res.status(200).json({ message: "HOLA TOTO" });
@@ -527,7 +533,7 @@ routerSupermercado.post("/solicitud", (req, res) => __awaiter(void 0, void 0, vo
     ];
     const { name, surname, email, password, role, dni, phone, name_supermercado, localidad, provincia, address, departamento, estado, fecha_solicitud, run, } = req.body;
     try {
-        if ((0, utils_1.validateRequiredStrings)(requiredField, req.body)) {
+        if ((0, utils_1.validateRequiredStrings)(req.body, requiredField)) {
             const newSolicitudSupermercado = yield db_1.SolicitudSupermercado.create({
                 name,
                 surname,
@@ -629,6 +635,74 @@ routerSupermercado.delete("/proveedor/:id", authMiddleware_1.authMiddleware, (0,
     catch (error) {
         console.log("EL ERROR FUE", error);
         res.status(500).json({ message: "Error del servidor" });
+    }
+}));
+routerSupermercado.post("/promociones/personalizadas", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN, types_1.UserRole.SUPER_ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { descuentos, horaCron } = req.body;
+        const userId = req.user.supermercado_id;
+        if (!Array.isArray(descuentos)) {
+            return res.status(400).json({ message: "Formato incorrecto" });
+        }
+        const cronExpression = typeof horaCron === "string" && horaCron !== "" ? horaCron : "0 0 * * *";
+        // Si ya hay un cron para este supermercado, detenelo
+        if (cronJob_1.cronJobs[userId]) {
+            cronJob_1.cronJobs[userId].stop();
+            delete cronJob_1.cronJobs[userId];
+        }
+        // Crear nueva tarea
+        const newCron = node_cron_1.default.schedule(cronExpression, () => {
+            console.log(`Ejecutando descuento para supermercado ${userId}`);
+            (0, descuentoServices_1.checkExpiringProductsPersonalizado)(descuentos, userId);
+        });
+        // Guardar la tarea en el objeto global
+        cronJob_1.cronJobs[userId] = newCron;
+        return res.status(200).json({
+            message: "Tarea programada con éxito",
+            cron: cronExpression,
+            descuentos,
+        });
+    }
+    catch (error) {
+        console.error("Error en programación de tarea:", error);
+        return res.status(500).json({ message: "Error interno del servidor" });
+    }
+}));
+routerSupermercado.get("/promociones/dias", authMiddleware_1.authMiddleware, (0, authMiddleware_1.roleMiddleware)([types_1.UserRole.ADMIN]), (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { dias } = req.query;
+        if (dias && dias !== "0") {
+            console.log("DIAS PRIMERO ES ", dias);
+            const diasNumero = dias && dias !== "" ? parseInt(dias, 10) : null;
+            if (diasNumero === null || isNaN(diasNumero)) {
+                res.status(400).json({ message: "Parámetro 'dias' inválido" });
+                return;
+            }
+            const productos = yield db_1.Producto.findAll({
+                include: [
+                    { model: db_1.Categoria, as: "categoria", attributes: ["name"] },
+                    { model: db_1.Marca, as: "marca", attributes: ["name"] },
+                    { model: db_1.Proveedor, as: "proveedor", attributes: ["name"] },
+                ],
+                where: (0, sequelize_1.where)((0, sequelize_1.fn)('DATE', (0, sequelize_1.col)('fechavencimiento')), '=', (0, sequelize_1.literal)(`CURRENT_DATE + INTERVAL '${diasNumero} days'`)),
+                attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "proveedor.id"],
+                group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"]
+            });
+            res.status(200).json({ cantidad: productos.length, allProductos: productos });
+        }
+        else {
+            console.log("DIAS SEGUNDO");
+            const allProductos = yield db_1.Producto.findAll({
+                include: [{ model: db_1.Categoria, as: "categoria", attributes: ["name"] }, { model: db_1.Marca, as: "marca", attributes: ["name"] }, { model: db_1.Proveedor, as: "proveedor", attributes: ["name"] }],
+                where: { descuento: { [sequelize_1.Op.ne]: 0 } },
+                attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "proveedor.id"],
+                group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"]
+            });
+            res.status(200).json({ cantidad: allProductos.length, allProductos });
+        }
+    }
+    catch (error) {
+        res.status(500).json({ message: "Error del Servidor" });
     }
 }));
 exports.default = routerSupermercado;

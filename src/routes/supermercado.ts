@@ -1,10 +1,12 @@
 import e, { Request, Response, Router } from "express";
-import { Op, Sequelize } from "sequelize";
+import { col, fn, literal, Op, Sequelize, where } from "sequelize";
 import { Categoria, Producto, Proveedor, SolicitudSupermercado, Supermercado, User , Marca } from "../db";
 import { authMiddleware, roleMiddleware } from "../middelware/authMiddleware";
 import { UserRole } from "../types/types";
 import { validateRequiredStrings } from "../utils/utils";
-
+import { checkExpiringProductsPersonalizado } from "../services/descuentoServices";
+import cron from "node-cron";
+import { cronJobs } from "../cron/cronJob";
 const routerSupermercado = Router();
 
 routerSupermercado.get("hoy" , async ( res : Response , req : Request)=>{
@@ -617,7 +619,7 @@ routerSupermercado.post("/solicitud", async (req: Request, res: Response) => {
     run,
   } = req.body;
   try {
-    if (validateRequiredStrings(requiredField, req.body)) {
+    if (validateRequiredStrings( req.body, requiredField)) {
       const newSolicitudSupermercado = await SolicitudSupermercado.create({
         name,
         surname,
@@ -740,5 +742,88 @@ routerSupermercado.delete("/proveedor/:id", authMiddleware,roleMiddleware([UserR
     }
   }
 );
+
+routerSupermercado.post("/promociones/personalizadas" , authMiddleware, roleMiddleware([UserRole.ADMIN , UserRole.SUPER_ADMIN]) , async( req : any , res : any)=>{
+  try {
+    const { descuentos, horaCron } = req.body;
+    const userId = req.user.supermercado_id;
+
+    if (!Array.isArray(descuentos)) {
+      return res.status(400).json({ message: "Formato incorrecto" });
+    }
+
+    const cronExpression = typeof horaCron === "string" && horaCron !== "" ? horaCron : "0 0 * * *";
+
+    // Si ya hay un cron para este supermercado, detenelo
+    if (cronJobs[userId]) {
+      cronJobs[userId].stop();
+      delete cronJobs[userId];
+    }
+
+    // Crear nueva tarea
+    const newCron = cron.schedule(cronExpression, () => {
+      console.log(`Ejecutando descuento para supermercado ${userId}`);
+      checkExpiringProductsPersonalizado(descuentos, userId);
+    });
+
+    // Guardar la tarea en el objeto global
+    cronJobs[userId] = newCron;
+
+    return res.status(200).json({
+      message: "Tarea programada con éxito",
+      cron: cronExpression,
+      descuentos,
+    });
+
+  } catch (error) {
+    console.error("Error en programación de tarea:", error);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
+} )
+
+routerSupermercado.get("/promociones/dias" , authMiddleware , roleMiddleware([UserRole.ADMIN]), async(req : Request , res : Response)=>{
+  try{
+
+    const {dias} = req.query;
+    if(dias && dias !=="0" ){
+
+      console.log("DIAS PRIMERO ES " , dias)
+      const diasNumero = dias && dias !== "" ? parseInt(dias as string, 10) : null;
+
+      if (diasNumero === null || isNaN(diasNumero)) {
+         res.status(400).json({ message: "Parámetro 'dias' inválido" });
+         return
+      }
+  
+      const productos = await Producto.findAll({
+        include: [
+          { model: Categoria, as: "categoria", attributes: ["name"] },
+          { model: Marca, as: "marca", attributes: ["name"] },
+          { model: Proveedor, as: "proveedor", attributes: ["name"] },
+        ],
+        where: where(
+          fn('DATE', col('fechavencimiento')),
+          '=',
+          literal(`CURRENT_DATE + INTERVAL '${diasNumero} days'`)
+        ),
+        attributes: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "proveedor.id"],
+        group: ["precio", "descuento", "preciodescuento", "fechavencimiento", "codigobarras", "categoria.id", "marca.id", "proveedor.id"]
+      });
+  
+      res.status(200).json({cantidad : productos.length , allProductos: productos});
+
+    }else{
+      console.log("DIAS SEGUNDO")
+ const allProductos = await Producto.findAll({
+  include : [{model : Categoria , as :"categoria" , attributes: ["name"]} , { model : Marca , as : "marca" , attributes : ["name"]} , {model : Proveedor , as : "proveedor" , attributes : ["name"]}],
+  where : {descuento : {[Op.ne] : 0}} , 
+  attributes: [ "precio", "descuento", "preciodescuento", "fechavencimiento" ,  "codigobarras", "proveedor.id"],
+      group: [ "precio", "descuento", "preciodescuento", "fechavencimiento",  "codigobarras", "categoria.id" , "marca.id" , "proveedor.id"]
+ })
+ res.status(200).json({cantidad : allProductos.length , allProductos})}
+  }catch(error : any){
+    res.status(500).json({message : "Error del Servidor"})
+  }
+})
 
 export default routerSupermercado;
