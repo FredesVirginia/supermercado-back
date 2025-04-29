@@ -13,6 +13,7 @@ import initProducto from "./models/Producto";
 import initPromocion from "./models/Promocion";
 import initReporte from "./models/Reporte";
 import initSupermercado from "./models/Supermercado";
+import initPromocionProgramada from "./models/PromocionesProgramadas";
 import initProveedor from "./models/Proveedor"
 import initSolicitudSupermercado from "./models/SolicitudesSupermercados"
 import initMarca from "./models/Marca";
@@ -58,6 +59,7 @@ const basename = path.basename(__filename);
 
 const User = initUser(sequelize);
 const Supermercado = initSupermercado(sequelize);
+const PromocionesProgramadas = initPromocionProgramada(sequelize)
 const Categoria = initCategoria(sequelize);
 const Historial = initHistorial(sequelize);
 const Notificacion = initNotificacion(sequelize);
@@ -76,6 +78,12 @@ User.hasMany(Supermercado, { foreignKey: "admin_id", as: "supermercados" });
 // 📌 Un Producto pertenece a una Categoría
 Producto.belongsTo(Categoria, { foreignKey: "categoria_id", as: "categoria" });
 Categoria.hasMany(Producto, { foreignKey: "categoria_id", as: "productos" });
+
+// 📌 Un Supermercado tiene promociones programadas y una promocion programada pertence a un Supermercado
+// Supermercado.belongsTo(PromocionesProgramadas , { foreignKey: "promocion_programada_id" , as :"promocion_programada"})
+// PromocionesProgramadas.hasMany(Supermercado , {foreignKey : "promocion_programada_id" , as : "promocion_programada"})
+PromocionesProgramadas.belongsTo(Supermercado, { foreignKey: "supermercado_id", as: "supermercado" });
+Supermercado.hasMany(PromocionesProgramadas, { foreignKey: "supermercado_id", as: "promociones_programadas" });
 
 // 📌 Un Producto tiene a una Marca
 Producto.belongsTo(Marca, { foreignKey: "marca_id", as: "marca" });
@@ -131,4 +139,4 @@ export const conn = sequelize;
 //   conn,
 // };
 
-export { sequelize, models , User , Producto , Proveedor , Supermercado , Categoria , SolicitudSupermercado , Marca};
+export { sequelize, models , User , Producto , Proveedor , Supermercado , Categoria , SolicitudSupermercado , Marca , PromocionesProgramadas};

@@ -1,6 +1,6 @@
 import e, { Request, Response, Router } from "express";
 import { col, fn, literal, Op, Sequelize, where } from "sequelize";
-import { Categoria, Producto, Proveedor, SolicitudSupermercado, Supermercado, User , Marca } from "../db";
+import { Categoria, Producto, Proveedor, SolicitudSupermercado, Supermercado, User , Marca , PromocionesProgramadas } from "../db";
 import { authMiddleware, roleMiddleware } from "../middelware/authMiddleware";
 import { UserRole } from "../types/types";
 import { validateRequiredStrings } from "../utils/utils";
@@ -693,9 +693,13 @@ routerSupermercado.delete("/proveedor/:id", authMiddleware,roleMiddleware([UserR
   }
 );
 
+
 routerSupermercado.post("/promociones/personalizadas" , authMiddleware, roleMiddleware([UserRole.ADMIN , UserRole.SUPER_ADMIN]) , async( req : any , res : any)=>{
   try {
     const { descuentos, horaCron } = req.body;
+   
+   
+
     const userId = req.user.supermercado_id;
 
     if (!Array.isArray(descuentos)) {
@@ -718,11 +722,16 @@ routerSupermercado.post("/promociones/personalizadas" , authMiddleware, roleMidd
 
     // Guardar la tarea en el objeto global
     cronJobs[userId] = newCron;
-
+    
+   const newPromocionProgramada =  await PromocionesProgramadas.create({
+      descuentos: descuentos as any,
+      hora_cron: cronExpression,
+    
+      supermercado_id: userId
+    });
     return res.status(200).json({
       message: "Tarea programada con éxito",
-      cron: cronExpression,
-      descuentos,
+      data : newPromocionProgramada
     });
 
   } catch (error) {
