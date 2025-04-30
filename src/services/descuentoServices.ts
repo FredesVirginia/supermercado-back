@@ -144,7 +144,7 @@ export const checkExpiringProductsPersonalizado = async (reglas: ReglaDescuento[
       (fechaVencimiento.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    console.log(`Producto: ${producto.id} | Días hasta vencimiento: ${diasHastaVencimiento}`);
+    // console.log(`Producto: ${producto.id} | Días hasta vencimiento: ${diasHastaVencimiento}`);
 
     let descuento = 0;
     let precioConDescuento = producto.getDataValue("precio");
@@ -169,11 +169,13 @@ export const checkExpiringProductsPersonalizado = async (reglas: ReglaDescuento[
   }
 
   if (productosActualizados > 0) {
+    console.log("PRIMEROOOOOO")
     io.emit("newDiscountPersonalizado", {
       message: `Se aplicó descuento a ${productosActualizados} producto(s).`,
       count: productosActualizados,
     });
   } else {
+    console.log("SEGUNDO")
     console.log("PRODUCTOS ACTUALIZADOS:", productosActualizados);
   }
 };

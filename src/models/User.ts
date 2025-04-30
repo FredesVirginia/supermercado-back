@@ -88,7 +88,7 @@ const initUser = (sequelize: Sequelize): typeof User => {
         }
       },
       dni: {
-        type: DataTypes.NUMBER,
+        type: DataTypes.INTEGER,
         allowNull: false,
         unique: true,
         validate: {

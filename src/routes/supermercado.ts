@@ -708,13 +708,15 @@ routerSupermercado.post("/promociones/personalizadas" , authMiddleware, roleMidd
 
     const cronExpression = typeof horaCron === "string" && horaCron !== "" ? horaCron : "0 0 * * *";
 
-    // Si ya hay un cron para este supermercado, detenelo
+    
+
+    // Si ya hay un cron para este supermercado, detenerlo
     if (cronJobs[userId]) {
       cronJobs[userId].stop();
       delete cronJobs[userId];
     }
 
-    // Crear nueva tarea
+    // Crear nueva tarea cron
     const newCron = cron.schedule(cronExpression, () => {
       console.log(`Ejecutando descuento para supermercado ${userId}`);
       checkExpiringProductsPersonalizado(descuentos, userId);
@@ -722,17 +724,28 @@ routerSupermercado.post("/promociones/personalizadas" , authMiddleware, roleMidd
 
     // Guardar la tarea en el objeto global
     cronJobs[userId] = newCron;
-    
-   const newPromocionProgramada =  await PromocionesProgramadas.create({
-      descuentos: descuentos as any,
-      hora_cron: cronExpression,
-    
-      supermercado_id: userId
-    });
-    return res.status(200).json({
-      message: "Tarea programada con éxito",
-      data : newPromocionProgramada
-    });
+
+  const existingPromocionProgramada = await PromocionesProgramadas.findOne({
+    where : {supermercado_id : userId}
+  })
+  
+    if(existingPromocionProgramada){
+      await existingPromocionProgramada.update({
+        descuentos : descuentos as any,
+        hora_cron : cronExpression
+      })
+      res.status(200).json({message : "Se actualizo la tarea Programada"  , data :{existingPromocionProgramada}})
+      return
+    }
+
+    const newPromocionProgramada =  await PromocionesProgramadas.create({
+          descuentos: descuentos as any,
+          hora_cron: cronExpression,
+        
+          supermercado_id: userId
+        });
+    res.status(200).json({message : "Se creo promocion Programada" , data : newPromocionProgramada})
+
 
   } catch (error) {
     console.error("Error en programación de tarea:", error);

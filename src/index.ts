@@ -14,10 +14,10 @@ conn.sync({ force: false }).then(() => {
   });
 });
 
-cron.schedule("30 21 * * *", () => {
-  console.log("Revisando productos proximos a expirar ...");
-  checkExpiringProducts();
-});
+// cron.schedule("30 21 * * *", () => {
+//   console.log("Revisando productos proximos a expirar ...");
+//   checkExpiringProducts();
+// });
 
 
 // cron.schedule("44 17 * * * " ,()=>{
